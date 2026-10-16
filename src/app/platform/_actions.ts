@@ -125,3 +125,18 @@ export async function resendOwnerInviteAction(tenantId: string, _prev: ActionSta
   await sendInviteEmail(tenant, owner.email, 'Das Plattform-Team', link).catch((e) => console.error(e))
   return { ok: true, message: 'Neue Einladung erstellt.', data: { inviteLink: link } }
 }
+
+/**
+ * Löscht einen Betrieb mit allen Daten endgültig (Vertragsende, Art. 28 Abs. 3 lit. g DSGVO).
+ * Nur für gesperrte Betriebe; Bestätigung durch Eingabe der Subdomain.
+ */
+export async function deleteTenantAction(tenantId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const admin = await requirePlatformAdmin()
+  const tenant = await db.tenant.findUnique({ where: { id: tenantId } })
+  if (!tenant) return { error: 'Betrieb nicht gefunden.' }
+  if (tenant.status !== 'SUSPENDED') return { error: 'Bitte den Betrieb zuerst sperren und den Datenexport abwarten.' }
+  if (String(formData.get('bestaetigung') ?? '').trim() !== tenant.slug) return { error: `Bitte zur Bestätigung „${tenant.slug}“ eingeben.` }
+  await db.tenant.delete({ where: { id: tenant.id } })
+  await audit({ actorType: 'PLATFORM_ADMIN', actorId: admin.id, action: 'tenant.status', detail: `Betrieb ${tenant.slug} endgültig gelöscht` })
+  redirect(platformPath('/betriebe'))
+}

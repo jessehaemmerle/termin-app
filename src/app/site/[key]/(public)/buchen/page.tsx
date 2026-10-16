@@ -175,14 +175,14 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
               change: href({ leistung: service.id, person, datum: date }),
             },
           ].map((row) => (
-            <div key={row.term} className="flex items-baseline justify-between gap-4 px-5 py-3">
-              <div className="min-w-0">
-                <dt className="text-sm text-graphite">{row.term}</dt>
-                <dd className="font-semibold">{row.value}</dd>
-              </div>
-              <Link href={row.change} className="text-sm shrink-0" aria-label={`${row.term} ändern`}>
-                Ändern
-              </Link>
+            <div key={row.term} className="grid grid-cols-[1fr_auto] items-center gap-x-4 px-5 py-3">
+              <dt className="text-sm text-graphite">{row.term}</dt>
+              <dd className="font-semibold col-start-1">{row.value}</dd>
+              <dd className="col-start-2 row-start-1 row-span-2">
+                <Link href={row.change} className="text-sm">
+                  Ändern<span className="sr-only">: {row.term}</span>
+                </Link>
+              </dd>
             </div>
           ))}
         </dl>
@@ -228,7 +228,6 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
                 <Link
                   href={href({ leistung: service.id, person, datum: d.date, ab: stripStart })}
                   aria-current={selected ? 'date' : undefined}
-                  aria-label={`${formatDayString(d.date)}: ${d.count ? `${d.count} freie Zeiten` : d.open ? 'ausgebucht' : 'geschlossen'}`}
                   className={`flex flex-col items-center justify-center w-16 h-20 rounded-[var(--radius-control)] border-[1.5px] no-underline ${
                     selected
                       ? 'bg-brand text-on-brand border-brand'
@@ -240,6 +239,9 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
                   <span className="text-xs">{formatDayString(d.date, { weekday: 'short' })}</span>
                   <span className="font-figures text-2xl font-semibold leading-none my-1">{Number(d.date.slice(8))}</span>
                   <span className="text-xs">{d.count ? `${d.count} frei` : d.open ? 'voll' : 'zu'}</span>
+                  <span className="sr-only">
+                    , {formatDayString(d.date)}: {d.count ? `${d.count} freie Zeiten` : d.open ? 'ausgebucht' : 'geschlossen'}
+                  </span>
                 </Link>
               </li>
             )

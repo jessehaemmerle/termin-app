@@ -9,9 +9,9 @@ Der Schutz Ihrer personenbezogenen Daten ist uns wichtig. Hier informieren wir S
 
 ## Verantwortlicher
 
-{{betrieb.legalName}}{{#if betrieb.legalForm}} ({{betrieb.legalForm}}){{/if}}
-{{betrieb.street}}, {{betrieb.postalCode}} {{betrieb.city}}, {{betrieb.country}}
-E-Mail für Datenschutzanfragen: {{betrieb.privacyEmail}}{{#if betrieb.phone}}
+{{betrieb.legalName}}{{#if betrieb.legalForm}} ({{betrieb.legalForm}}){{/if}}\\
+{{betrieb.street}}, {{betrieb.postalCode}} {{betrieb.city}}, {{betrieb.country}}\\
+E-Mail für Datenschutzanfragen: {{betrieb.privacyEmail}}{{#if betrieb.phone}}\\
 Telefon: {{betrieb.phone}}{{/if}}
 
 {{#if betrieb.dpoName}}Unsere Datenschutzbeauftragte bzw. unser Datenschutzbeauftragter: {{betrieb.dpoName}}{{#if betrieb.dpoEmail}}, {{betrieb.dpoEmail}}{{/if}}{{/if}}

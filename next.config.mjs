@@ -1,5 +1,3 @@
-import type { NextConfig } from 'next'
-
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -11,8 +9,8 @@ const securityHeaders = [
   },
 ]
 
-const nextConfig: NextConfig = {
-  output: 'standalone',
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ['@node-rs/argon2', 'sharp', 'web-push', 'nodemailer'],
   experimental: {

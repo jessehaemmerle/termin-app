@@ -1,0 +1,30 @@
+# Reverse Proxy mit automatischem HTTPS (Let's Encrypt).
+# Zertifikate werden bei Bedarf ausgestellt ("on demand") – aber nur für Domains,
+# die die App über /api/internal/caddy-ask freigibt (Plattform, Betriebs-
+# Subdomains, bestätigte eigene Domains).
+#
+# Datenschutz: Es ist bewusst KEIN Access-Log konfiguriert (keine IP-Protokolle).
+# Caddy ist der einzige Proxy: Vom Client mitgeschickte X-Forwarded-For-Werte
+# werden verworfen, die App sieht die echte Client-IP (nur für Rate-Limits).
+{
+	email {$ACME_EMAIL}
+	on_demand_tls {
+		ask http://app:3000/api/internal/caddy-ask
+	}
+}
+
+https:// {
+	tls {
+		on_demand
+	}
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+		-X-Powered-By
+	}
+	# Interne Endpunkte nicht öffentlich erreichbar machen
+	@internal path /api/internal/*
+	respond @internal 404
+	reverse_proxy app:3000
+}

@@ -1,0 +1,117 @@
+# Produktion: docker compose up -d --build
+# Voraussetzung: .env mit den Werten aus .env.example (Produktionswerte!), DNS:
+#   A/AAAA <PLATFORM-DOMAIN> und *.<PLATFORM-DOMAIN> auf diesen Server.
+
+name: termin-app
+
+x-app: &app
+  build: .
+  image: termin-app:latest
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: postgresql://${POSTGRES_USER:-termin}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}@db:5432/${POSTGRES_DB:-termin}
+    TRUST_PROXY: "true"
+    COOKIE_SECURE: "true"
+    NEXT_TELEMETRY_DISABLED: "1"
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-termin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
+      POSTGRES_DB: ${POSTGRES_DB:-termin}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    shm_size: 128mb
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  migrate:
+    <<: *app
+    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [backend]
+    restart: "no"
+    mem_limit: 512m
+
+  app:
+    <<: *app
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    volumes:
+      - nextcache:/app/.next/cache
+    networks: [backend, frontend]
+    mem_limit: 768m
+
+  worker:
+    <<: *app
+    command: ["node", "dist/worker.mjs"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [backend, egress]
+    healthcheck:
+      disable: true
+    mem_limit: 384m
+
+  caddy:
+    image: caddy:2.10-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL fehlt}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [frontend]
+    depends_on:
+      app: { condition: service_healthy }
+    restart: unless-stopped
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+networks:
+  # Datenbank nur intern erreichbar
+  backend:
+    internal: true
+  # Caddy <-> App, Internetzugang für App (SMTP, WhatsApp, Push über egress im Worker)
+  frontend: {}
+  egress: {}
+
+volumes:
+  pgdata: {}
+  caddy_data: {}
+  caddy_config: {}
+  nextcache: {}

@@ -73,9 +73,15 @@
     line-height: var(--text-base--line-height);
     min-height: 100dvh;
   }
+  /* Links im Text sind unterstrichen (nicht nur farblich erkennbar, WCAG 1.4.1) */
   a {
     color: var(--color-brand-text);
+    text-decoration-line: underline;
+    text-decoration-thickness: from-font;
     text-underline-offset: 0.2em;
+  }
+  a:hover {
+    text-decoration-thickness: 2px;
   }
   :focus-visible {
     outline: 3px solid var(--color-brand-text);

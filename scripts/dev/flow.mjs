@@ -5,7 +5,7 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 }, devi
 const errors = []
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
 page.on('pageerror', (e) => errors.push(e.message))
-await page.goto('http://mayer.localhost:3000/buchen')
+await page.goto((process.env.BASE ?? 'http://mayer.localhost:3000') + '/buchen')
 await page.screenshot({ path: `${S}/b1.png`, fullPage: true })
 await page.getByRole('link', { name: /Herrenhaarschnitt/ }).click()
 await page.waitForURL(/leistung=/)

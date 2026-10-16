@@ -9,15 +9,15 @@ Informationen gemäß § 5 E-Commerce-Gesetz (ECG), § 14 Unternehmensgesetzbuch
 
 ## Diensteanbieter und Medieninhaber
 
-**{{betrieb.legalName}}**{{#if betrieb.legalForm}}
-{{betrieb.legalForm}}{{/if}}
-{{betrieb.street}}
-{{betrieb.postalCode}} {{betrieb.city}}
+**{{betrieb.legalName}}**{{#if betrieb.legalForm}}\\
+{{betrieb.legalForm}}{{/if}}\\
+{{betrieb.street}}\\
+{{betrieb.postalCode}} {{betrieb.city}}\\
 {{betrieb.country}}
 
 ## Kontakt
 
-{{#if betrieb.phone}}Telefon: {{betrieb.phone}}
+{{#if betrieb.phone}}Telefon: {{betrieb.phone}}\\
 {{/if}}E-Mail: {{betrieb.email}}
 
 ## Angaben zum Unternehmen
@@ -34,8 +34,8 @@ Informationen gemäß § 5 E-Commerce-Gesetz (ECG), § 14 Unternehmensgesetzbuch
 
 ## Offenlegung gemäß § 25 MedienG
 
-Medieninhaber: {{betrieb.legalName}}, Sitz in {{betrieb.city}}.
-Unternehmensgegenstand: {{betrieb.businessPurpose}}.
+Medieninhaber: {{betrieb.legalName}}, Sitz in {{betrieb.city}}.\\
+Unternehmensgegenstand: {{betrieb.businessPurpose}}.\\
 Grundlegende Richtung: Information über das Angebot von {{betrieb.name}} und Möglichkeit zur Online-Terminvereinbarung.
 
 ## Haftung für Links
@@ -53,15 +53,15 @@ Informationen gemäß § 5 E-Commerce-Gesetz (ECG), § 14 Unternehmensgesetzbuch
 
 ## Diensteanbieter und Medieninhaber
 
-**{{plattform.operator.name}}**{{#if plattform.operator.legalForm}}
-{{plattform.operator.legalForm}}{{/if}}
-{{plattform.operator.street}}
-{{plattform.operator.postalCode}} {{plattform.operator.city}}
+**{{plattform.operator.name}}**{{#if plattform.operator.legalForm}}\\
+{{plattform.operator.legalForm}}{{/if}}\\
+{{plattform.operator.street}}\\
+{{plattform.operator.postalCode}} {{plattform.operator.city}}\\
 {{plattform.operator.country}}
 
 ## Kontakt
 
-{{#if plattform.operator.phone}}Telefon: {{plattform.operator.phone}}
+{{#if plattform.operator.phone}}Telefon: {{plattform.operator.phone}}\\
 {{/if}}E-Mail: {{plattform.operator.email}}
 
 ## Angaben zum Unternehmen
@@ -76,8 +76,8 @@ Informationen gemäß § 5 E-Commerce-Gesetz (ECG), § 14 Unternehmensgesetzbuch
 
 ## Offenlegung gemäß § 25 MedienG
 
-Medieninhaber: {{plattform.operator.name}}, Sitz in {{plattform.operator.city}}.
-Unternehmensgegenstand: {{plattform.operator.businessPurpose}}.
+Medieninhaber: {{plattform.operator.name}}, Sitz in {{plattform.operator.city}}.\\
+Unternehmensgegenstand: {{plattform.operator.businessPurpose}}.\\
 Grundlegende Richtung: Information über die Terminbuchungs-Plattform {{plattform.name}}.
 
 ## Hinweis zu den Buchungsseiten der Betriebe

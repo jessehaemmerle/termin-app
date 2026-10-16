@@ -178,7 +178,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               const own = bookings.filter((b) => b.staffId === s.id)
               const absent = timeOff.filter((t) => t.staffId === s.id || t.staffId === null)
               return (
-                <div key={s.id} className="relative border-l border-rule" style={{ height }} aria-label={`Termine von ${s.name}`}>
+                <div key={s.id} className="relative border-l border-rule" style={{ height }} role="group" aria-label={`Termine von ${s.name}`}>
                   {hours.map((m) => (
                     <div key={m} aria-hidden="true" className="absolute inset-x-0 border-t border-rule/70" style={{ top: (m - gridStart) * PX_PER_MIN }} />
                   ))}

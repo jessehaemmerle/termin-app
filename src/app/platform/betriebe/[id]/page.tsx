@@ -6,7 +6,7 @@ import { platformPath, tenantBaseUrl, missingImprintFields } from '@/lib/tenant'
 import { formatDateTime } from '@/lib/format'
 import { ActionForm, ResultValue, SubmitButton } from '@/components/action-form'
 import { DefinitionList, Sheet, SheetHeader } from '@/components/ui'
-import { resendOwnerInviteAction, setTenantStatusAction } from '../../_actions'
+import { deleteTenantAction, resendOwnerInviteAction, setTenantStatusAction } from '../../_actions'
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requirePlatformAdmin()
@@ -46,6 +46,20 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
           <ActionForm action={setTenantStatusAction.bind(null, tenant.id, 'ACTIVE')} className="contents"><SubmitButton>Betrieb freischalten</SubmitButton></ActionForm>
         )}
       </div>
+      {tenant.status === 'SUSPENDED' && (
+        <Sheet>
+          <SheetHeader title="Betrieb endgültig löschen" description="Löscht alle Daten des Betriebs (Kund:innen, Termine, Teamzugänge, Einstellungen) unwiderruflich, z. B. 30 Tage nach Vertragsende. Datensicherungen werden im Rahmen der Rotation überschrieben." />
+          <div className="px-5 pb-5">
+            <ActionForm action={deleteTenantAction.bind(null, tenant.id)} className="flex flex-wrap gap-3 items-end">
+              <div className="space-y-1.5">
+                <label htmlFor="bestaetigung" className="block font-semibold">Zur Bestätigung „{tenant.slug}“ eingeben</label>
+                <input id="bestaetigung" name="bestaetigung" autoComplete="off" className="field-control" />
+              </div>
+              <SubmitButton variant="danger" pendingLabel="Wird gelöscht …">Endgültig löschen</SubmitButton>
+            </ActionForm>
+          </div>
+        </Sheet>
+      )}
       {pendingInvite && (
         <ActionForm action={resendOwnerInviteAction.bind(null, tenant.id)}>
           <SubmitButton variant="secondary">Einladung erneut senden</SubmitButton>

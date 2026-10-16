@@ -9,12 +9,12 @@ gemäß Art. 28 Datenschutz-Grundverordnung (DSGVO)
 
 zwischen
 
-**{{betrieb.legalName}}**, {{betrieb.street}}, {{betrieb.postalCode}} {{betrieb.city}}
+**{{betrieb.legalName}}**, {{betrieb.street}}, {{betrieb.postalCode}} {{betrieb.city}}\\
 – Verantwortlicher, im Folgenden „Auftraggeber“ –
 
 und
 
-**{{plattform.operator.name}}**, {{plattform.operator.street}}, {{plattform.operator.postalCode}} {{plattform.operator.city}}
+**{{plattform.operator.name}}**, {{plattform.operator.street}}, {{plattform.operator.postalCode}} {{plattform.operator.city}}\\
 – Auftragsverarbeiter, im Folgenden „Auftragnehmer“ –
 
 ## § 1 Gegenstand und Dauer

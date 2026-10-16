@@ -437,7 +437,7 @@ model Booking {
 
   tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer      Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  service       Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  service       Service           @relation(fields: [serviceId], references: [id], onDelete: NoAction)
   staff         Staff?            @relation(fields: [staffId], references: [id], onDelete: SetNull)
   groupSession  GroupSession?     @relation(fields: [groupSessionId], references: [id], onDelete: Cascade)
   resources     BookingResource[]

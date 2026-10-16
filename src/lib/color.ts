@@ -39,6 +39,7 @@ function mix(hex: string, target: [number, number, number], amount: number): str
 
 const INK = '#18202e'
 const WHITE = '#ffffff'
+const PAPER = '#f3f5f8'
 
 export type BrandPalette = {
   brand: string
@@ -51,14 +52,19 @@ export type BrandPalette = {
 /**
  * Leitet aus der Primärfarbe eines Betriebs eine lesbare Palette ab:
  * - onBrand: Textfarbe auf der Markenfarbe (weiß oder Tinte, je nach Kontrast)
- * - brandText: Markenfarbe abgedunkelt, bis sie als Text auf Weiß 4,5:1 erreicht
+ * - brandText: Markenfarbe abgedunkelt, bis sie als Text auf Weiß, Papier und
+ *   Markentönung jeweils 4,5:1 erreicht
  */
 export function brandPalette(primary: string): BrandPalette {
   const brand = isHexColor(primary) ? primary.toLowerCase() : '#1f5f8b'
   const onBrand = contrastRatio(brand, WHITE) >= contrastRatio(brand, INK) ? WHITE : INK
 
+  const brandSoft = mix(brand, [255, 255, 255], 0.9)
+  // Markenfarbe als Textfarbe muss auf allen verwendeten Hintergründen lesbar sein
+  const backgrounds = [WHITE, PAPER, brandSoft]
+  const readable = (color: string) => backgrounds.every((bg) => contrastRatio(color, bg) >= 4.5)
   let brandText = brand
-  for (let step = 1; step <= 20 && contrastRatio(brandText, WHITE) < 4.5; step++) {
+  for (let step = 1; step <= 20 && !readable(brandText); step++) {
     brandText = mix(brand, [0, 0, 0], step * 0.05)
   }
 
@@ -66,7 +72,7 @@ export function brandPalette(primary: string): BrandPalette {
     brand,
     onBrand,
     brandText,
-    brandSoft: mix(brand, [255, 255, 255], 0.9),
+    brandSoft,
     brandLine: mix(brand, [255, 255, 255], 0.65),
   }
 }

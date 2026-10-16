@@ -10,8 +10,8 @@ Für die Daten der Endkundinnen und Endkunden, die über die Buchungsseiten der 
 
 ## Verantwortlicher
 
-{{plattform.operator.name}}
-{{plattform.operator.street}}, {{plattform.operator.postalCode}} {{plattform.operator.city}}, {{plattform.operator.country}}
+{{plattform.operator.name}}\\
+{{plattform.operator.street}}, {{plattform.operator.postalCode}} {{plattform.operator.city}}, {{plattform.operator.country}}\\
 E-Mail für Datenschutzanfragen: {{plattform.operator.privacyEmail}}
 
 ## Aufruf der Website
