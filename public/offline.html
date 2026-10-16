@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de-AT">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Keine Verbindung</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        background: #f3f5f8;
+        color: #18202e;
+        font: 17px/1.55 system-ui, sans-serif;
+        padding: 1rem;
+      }
+      main {
+        max-width: 26rem;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 0.5rem;
+      }
+      p {
+        color: #535e70;
+        margin: 0 0 1.5rem;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        min-height: 3rem;
+        padding: 0 1.25rem;
+        border-radius: 0.625rem;
+        border: 1.5px solid #b6bfcb;
+        background: #fff;
+        color: #18202e;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 3px solid #1f5f8b;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Keine Internetverbindung</h1>
+      <p>Termine können nur online gebucht und angezeigt werden. Bitte prüfen Sie Ihre Verbindung.</p>
+      <button type="button" id="retry">Erneut versuchen</button>
+    </main>
+    <script>
+      document.getElementById('retry').addEventListener('click', function () {
+        location.reload()
+      })
+    </script>
+  </body>
+</html>
