@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build && npm run build:worker",
-    "build:worker": "esbuild src/worker/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/worker.mjs",
+    "build:worker": "esbuild src/worker/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/worker.mjs && esbuild scripts/create-platform-admin.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/create-platform-admin.mjs",
     "start": "next start",
     "worker": "tsx --env-file-if-exists=.env src/worker/index.ts",
     "lint": "eslint .",

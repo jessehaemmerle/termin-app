@@ -19,9 +19,9 @@ const passwordHash = await hash(password, { memoryCost: 19456, timeCost: 2, para
 
 const existing = await db.user.findFirst({ where: { tenantId: null, email } })
 if (existing) {
-  await db.user.update({ where: { id: existing.id }, data: { passwordHash, role: 'PLATFORM_ADMIN', active: true, failedLogins: 0, lockedUntil: null } })
+  await db.user.update({ where: { id: existing.id }, data: { passwordHash, role: 'PLATFORM_ADMIN', active: true, failedLogins: 0, lockedUntil: null, totpSecretEnc: null, totpEnabledAt: null, totpRecoveryHashes: [] } })
   await db.session.deleteMany({ where: { userId: existing.id } })
-  console.log(`Passwort für ${email} neu gesetzt.`)
+  console.log(`Passwort für ${email} neu gesetzt, Zwei-Faktor-Anmeldung zurückgesetzt.`)
 } else {
   await db.user.create({ data: { email, name, role: 'PLATFORM_ADMIN', passwordHash } })
   console.log(`Plattform-Admin ${email} angelegt.`)
