@@ -12,7 +12,8 @@ import { isValidHostname } from '@/lib/hosts'
 import { platformBase } from '@/lib/env'
 import { normalizePhone } from '@/lib/phone'
 import { MAX_LOGO_BYTES, normalizeLogo, regenerateIcons } from '@/lib/branding'
-import { sendMail, verifyTenantSmtp } from '@/lib/notifications/mailer'
+import { sendMail, SMTP_PORTS, smtpErrorMessage, verifyTenantSmtp } from '@/lib/notifications/mailer'
+import { resolvePublicAddress } from '@/lib/net'
 import { renderEmail } from '@/lib/notifications/email-layout'
 import { sendWhatsappTemplate, WhatsappError } from '@/lib/notifications/whatsapp'
 import { DPA_VERSION, TERMS_VERSION } from '@/lib/legal/consent'
@@ -174,7 +175,7 @@ export async function saveLegalAction(_prev: ActionState, formData: FormData): P
 
 const smtpSchema = z.object({
   host: z.string({ error: 'Bitte den SMTP-Server angeben.' }).min(3, 'Bitte den SMTP-Server angeben.').max(200).refine(isValidHostname, 'Ungültiger Servername.'),
-  port: z.coerce.number().int().min(1).max(65535),
+  port: z.coerce.number().int().refine((p) => SMTP_PORTS.includes(p), `Erlaubt sind die Ports ${SMTP_PORTS.join(', ')}.`),
   benutzer: z.string().max(200).optional(),
   passwort: z.string().max(500).optional(),
   absender: z.email({ error: 'Bitte eine gültige Absenderadresse angeben.' }).max(200),
@@ -185,14 +186,28 @@ export async function saveSmtpAction(_prev: ActionState, formData: FormData): Pr
   const ctx = await owner()
   const parsed = smtpSchema.safeParse(formObject(formData))
   if (!parsed.success) return { error: 'Bitte prüfe die Angaben.', fieldErrors: zodFieldErrors(parsed.error) }
+  const host = parsed.data.host.toLowerCase()
+  const user = parsed.data.benutzer ?? null
+  try {
+    await resolvePublicAddress(host)
+  } catch (error) {
+    return { error: 'Bitte prüfe die Angaben.', fieldErrors: { host: smtpErrorMessage(error) } }
+  }
+  // Das gespeicherte Passwort nur an denselben Server senden – sonst ließe es sich
+  // durch Umstellen auf einen fremden Server auslesen.
+  const t = ctx.tenant
+  const sameServer = host === t.smtpHost && parsed.data.port === t.smtpPort && user === t.smtpUser
+  if (!sameServer && user && t.smtpPasswordEnc && !parsed.data.passwort) {
+    return { error: 'Bitte prüfe die Angaben.', fieldErrors: { passwort: 'Bei geändertem Server, Port oder Benutzer bitte das Passwort erneut eingeben.' } }
+  }
   await db.tenant.update({
     where: { id: ctx.tenant.id },
     data: {
-      smtpHost: parsed.data.host.toLowerCase(),
+      smtpHost: host,
       smtpPort: parsed.data.port,
       smtpSecure: checkbox(formData, 'tls'),
-      smtpUser: parsed.data.benutzer ?? null,
-      ...(parsed.data.passwort ? { smtpPasswordEnc: encrypt(parsed.data.passwort) } : {}),
+      smtpUser: user,
+      ...(parsed.data.passwort ? { smtpPasswordEnc: encrypt(parsed.data.passwort) } : sameServer ? {} : { smtpPasswordEnc: null }),
       smtpFromEmail: parsed.data.absender.toLowerCase(),
       smtpFromName: parsed.data.absenderName ?? null,
     },
@@ -222,7 +237,7 @@ export async function testSmtpAction(_prev: ActionState): Promise<ActionState> {
     )
     await sendMail({ to: ctx.user.email, ...mail }, tenant)
   } catch (error) {
-    return { error: `Versand fehlgeschlagen: ${error instanceof Error ? error.message : 'unbekannter Fehler'}` }
+    return { error: `Versand fehlgeschlagen: ${smtpErrorMessage(error)}` }
   }
   return { ok: true, message: `Test-E-Mail an ${ctx.user.email} gesendet.` }
 }

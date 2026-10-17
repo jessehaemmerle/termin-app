@@ -9,7 +9,7 @@ import { normalizePhone } from '@/lib/phone'
 import { eraseCustomer } from '@/lib/privacy/erase'
 import { WHATSAPP_CONSENT_VERSION } from '@/lib/legal/consent'
 import { audit } from '@/lib/audit'
-import { formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { boundId, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
 
 const schema = z.object({
   name: z.string().min(2, 'Bitte den Namen angeben.').max(100),
@@ -19,6 +19,7 @@ const schema = z.object({
 })
 
 export async function updateCustomerAction(customerId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  boundId(customerId)
   const ctx = await requireStaff({ permission: 'customers.manage' })
   const customer = await db.customer.findFirst({ where: { id: customerId, tenantId: ctx.tenant.id } })
   if (!customer) return { error: 'Kund:in nicht gefunden.' }
@@ -48,6 +49,7 @@ export async function updateCustomerAction(customerId: string, _prev: ActionStat
 }
 
 export async function withdrawCustomerWhatsappAction(customerId: string, _prev: ActionState): Promise<ActionState> {
+  boundId(customerId)
   const ctx = await requireStaff({ permission: 'customers.manage' })
   const customer = await db.customer.findFirst({ where: { id: customerId, tenantId: ctx.tenant.id } })
   if (!customer) return { error: 'Kund:in nicht gefunden.' }
@@ -63,6 +65,7 @@ export async function withdrawCustomerWhatsappAction(customerId: string, _prev: 
 }
 
 export async function eraseCustomerAction(customerId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  boundId(customerId)
   const ctx = await requireStaff({ permission: 'customers.privacy' })
   if (formData.get('bestaetigung') !== 'LÖSCHEN') return { error: 'Bitte gib zur Bestätigung LÖSCHEN ein.' }
   const ok = await eraseCustomer(ctx.tenant.id, customerId)

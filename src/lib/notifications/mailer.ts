@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../env'
 import { decryptOrNull, randomToken } from '../crypto'
+import { PrivateAddressError, resolvePublicAddress } from '../net'
 import type { Tenant } from '@/generated/prisma/client'
 
 export type MailMessage = {
@@ -36,12 +37,22 @@ function platformTransport(): Transporter | null {
   return transports.get(key)!
 }
 
-export function tenantTransport(tenant: SenderTenant): Transporter | null {
+/** Ports für eigene SMTP-Server der Betriebe (verhindert Zugriffe auf andere Dienste). */
+export const SMTP_PORTS = [25, 465, 587, 2525]
+
+export class SmtpConfigError extends Error {}
+
+export async function tenantTransport(tenant: SenderTenant): Promise<Transporter | null> {
   if (!tenant.smtpHost) return null
+  const port = tenant.smtpPort ?? 587
+  if (!SMTP_PORTS.includes(port)) throw new SmtpConfigError(`Port ${port} ist für den E-Mail-Versand nicht zulässig.`)
+  // Verbindung zur geprüften öffentlichen Adresse, Zertifikat wird gegen den Namen geprüft
+  const address = await resolvePublicAddress(tenant.smtpHost)
   const password = decryptOrNull(tenant.smtpPasswordEnc)
   return nodemailer.createTransport({
-    host: tenant.smtpHost,
-    port: tenant.smtpPort ?? 587,
+    host: address,
+    servername: tenant.smtpHost,
+    port,
     secure: tenant.smtpSecure,
     auth: tenant.smtpUser ? { user: tenant.smtpUser, pass: password ?? '' } : undefined,
     requireTLS: !tenant.smtpSecure,
@@ -65,7 +76,7 @@ export class MailNotConfiguredError extends Error {}
  */
 export async function sendMail(message: MailMessage, tenant?: SenderTenant | null): Promise<string> {
   const e = env()
-  const own = tenant ? tenantTransport(tenant) : null
+  const own = tenant ? await tenantTransport(tenant) : null
   if (own && tenant) {
     const from = { name: tenant.smtpFromName || tenant.name, address: tenant.smtpFromEmail || tenant.smtpUser || e.SMTP_FROM_EMAIL }
     const info = await own.sendMail({ from, ...message })
@@ -83,7 +94,29 @@ export async function sendMail(message: MailMessage, tenant?: SenderTenant | nul
 }
 
 export async function verifyTenantSmtp(tenant: SenderTenant) {
-  const transport = tenantTransport(tenant)
+  const transport = await tenantTransport(tenant)
   if (!transport) throw new Error('Kein eigener SMTP-Server hinterlegt.')
   await transport.verify()
+}
+
+/** Verständliche Fehlermeldung für den Verbindungstest, ohne Antworten fremder Server durchzureichen. */
+export function smtpErrorMessage(error: unknown): string {
+  if (error instanceof PrivateAddressError || error instanceof SmtpConfigError || error instanceof MailNotConfiguredError) return error.message
+  switch ((error as { code?: string } | null)?.code) {
+    case 'EAUTH':
+      return 'Anmeldung am SMTP-Server fehlgeschlagen. Bitte Benutzername und Passwort prüfen.'
+    case 'ETLS':
+    case 'EREQUIRETLS':
+      return 'Keine verschlüsselte Verbindung möglich. Bitte TLS-Einstellung und Port prüfen.'
+    case 'ENOTFOUND':
+    case 'EDNS':
+      return 'Der SMTP-Server wurde nicht gefunden.'
+    case 'ECONNECTION':
+    case 'ECONNREFUSED':
+    case 'ETIMEDOUT':
+    case 'ESOCKET':
+      return 'Keine Verbindung zum SMTP-Server. Bitte Servername und Port prüfen.'
+    default:
+      return 'Der SMTP-Server hat die Nachricht nicht angenommen.'
+  }
 }

@@ -11,7 +11,7 @@ import { createAuthToken } from '@/lib/auth/tokens'
 import { sendInviteEmail } from '@/lib/notifications/auth-emails'
 import { tenantUrl } from '@/lib/tenant'
 import { audit } from '@/lib/audit'
-import { checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { boundId, checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
 
 const staffSchema = z.object({
   name: z.string({ error: 'Bitte einen Namen angeben.' }).min(2, 'Bitte einen Namen angeben.').max(80),
@@ -21,6 +21,7 @@ const staffSchema = z.object({
 })
 
 export async function saveStaffAction(staffId: string | null, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  if (staffId !== null) boundId(staffId)
   const ctx = await requireStaff({ permission: 'hours.manage' })
   const parsed = staffSchema.safeParse(formObject(formData))
   if (!parsed.success) return { error: 'Bitte prüfe die Angaben.', fieldErrors: zodFieldErrors(parsed.error) }
@@ -46,6 +47,7 @@ export async function saveStaffAction(staffId: string | null, _prev: ActionState
 }
 
 export async function saveStaffHoursAction(staffId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  boundId(staffId)
   const ctx = await requireStaff({ permission: 'hours.manage' })
   const staff = await db.staff.findFirst({ where: { id: staffId, tenantId: ctx.tenant.id } })
   if (!staff) return { error: 'Person nicht gefunden.' }
@@ -102,6 +104,7 @@ export async function inviteUserAction(_prev: ActionState, formData: FormData): 
 }
 
 export async function resendInviteAction(userId: string, _prev: ActionState): Promise<ActionState> {
+  boundId(userId)
   const ctx = await requireStaff({ permission: 'team.manage' })
   const user = await db.user.findFirst({ where: { id: userId, tenantId: ctx.tenant.id, passwordHash: null } })
   if (!user) return { error: 'Einladung nicht gefunden oder bereits angenommen.' }
@@ -114,6 +117,7 @@ export async function resendInviteAction(userId: string, _prev: ActionState): Pr
 const userSchema = z.object({ rolle: z.enum(['OWNER', 'MANAGER', 'STAFF']) })
 
 export async function updateUserAction(userId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  boundId(userId)
   const ctx = await requireStaff({ permission: 'team.manage' })
   const parsed = userSchema.safeParse(formObject(formData))
   if (!parsed.success) return { error: 'Ungültige Rolle.' }

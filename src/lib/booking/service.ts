@@ -44,29 +44,55 @@ function isOverlapViolation(error: unknown) {
   return text.includes('Booking_staff_no_overlap') || text.includes('23P01')
 }
 
-async function resolveCustomer(tx: Prisma.TransactionClient, tenantId: string, input: CustomerInput): Promise<Customer> {
+/**
+ * Ordnet eine Buchung einer Kundin bzw. einem Kunden zu. `trusted` ist nur gesetzt, wenn die
+ * Angaben vom angemeldeten Konto stammen, der Datensatz gerade neu angelegt oder über genau die
+ * angegebene Telefonnummer gefunden wurde.
+ * Gastangaben, die auf einen bestehenden Datensatz passen, verändern diesen nicht und lesen
+ * nichts daraus – sonst könnte jede Person mit einer fremden E-Mail-Adresse Name, Telefonnummer
+ * oder Einwilligungen anderer ändern bzw. auslesen.
+ */
+async function resolveCustomer(tx: Prisma.TransactionClient, tenantId: string, input: CustomerInput): Promise<{ customer: Customer; trusted: boolean }> {
   if (input.kind === 'account') {
     const customer = await tx.customer.findFirst({ where: { id: input.customerId, tenantId } })
     if (!customer) throw new BookingError('NOT_FOUND', 'Kundenkonto nicht gefunden.')
-    return tx.customer.update({
+    const updated = await tx.customer.update({
       where: { id: customer.id },
       data: { lastActivityAt: new Date(), ...(input.phone && !customer.phone ? { phone: input.phone } : {}) },
     })
+    return { customer: updated, trusted: true }
   }
   if (!input.email) {
     // Telefonische Buchung ohne E-Mail: über die Telefonnummer zuordnen, sonst neu anlegen
     const byPhone = input.phone ? await tx.customer.findFirst({ where: { tenantId, phone: input.phone, email: null } }) : null
-    if (byPhone) return tx.customer.update({ where: { id: byPhone.id }, data: { name: input.name, lastActivityAt: new Date() } })
-    return tx.customer.create({ data: { tenantId, name: input.name, email: null, phone: input.phone ?? null } })
+    // Der Datensatz ist über genau diese Nummer bestimmt; der Name wird trotzdem nicht überschrieben
+    if (byPhone) return { customer: await touch(tx, byPhone.id), trusted: true }
+    return { customer: await tx.customer.create({ data: { tenantId, name: input.name, email: null, phone: input.phone ?? null } }), trusted: true }
   }
   const email = input.email.toLowerCase()
   const existing = await tx.customer.findUnique({ where: { tenantId_email: { tenantId, email } } })
-  if (existing) {
-    // Daten eines Kundenkontos werden durch Gastbuchungen nicht überschrieben.
-    const update = existing.passwordHash ? {} : { name: input.name, ...(input.phone ? { phone: input.phone } : {}) }
-    return tx.customer.update({ where: { id: existing.id }, data: { ...update, lastActivityAt: new Date() } })
+  if (existing) return { customer: await touch(tx, existing.id), trusted: false }
+  return { customer: await tx.customer.create({ data: { tenantId, name: input.name, email, phone: input.phone ?? null } }), trusted: true }
+}
+
+function touch(tx: Prisma.TransactionClient, customerId: string) {
+  return tx.customer.update({ where: { id: customerId }, data: { lastActivityAt: new Date() } })
+}
+
+/**
+ * Telefonnummer und WhatsApp für eine Buchung bzw. einen Wartelisteneintrag. Bei ungeprüften
+ * Angaben gilt nur die eingegebene Nummer, und WhatsApp nur, wenn sie der Nummer mit
+ * bestehender Einwilligung entspricht.
+ */
+async function contactChannels(tx: Prisma.TransactionClient, tenant: Tenant, resolved: { customer: Customer; trusted: boolean }, input: CustomerInput, wantsWhatsapp: boolean, consentSource: string) {
+  const { customer, trusted } = resolved
+  const phone = input.phone ?? (trusted ? customer.phone : null) ?? null
+  if (!wantsWhatsapp || !phone || !tenant.whatsappEnabled) return { phone, notifyWhatsapp: false }
+  if (trusted) {
+    await recordWhatsappConsent(tx, tenant.id, customer, consentSource)
+    return { phone, notifyWhatsapp: true }
   }
-  return tx.customer.create({ data: { tenantId, name: input.name, email, phone: input.phone ?? null } })
+  return { phone, notifyWhatsapp: customer.whatsappOptIn && customer.phone === phone }
 }
 
 async function recordWhatsappConsent(tx: Prisma.TransactionClient, tenantId: string, customer: Customer, source: string) {
@@ -139,10 +165,9 @@ export async function createIndividualBooking(
           staffId = [...candidates].sort((a, b) => (load.get(a) ?? 0) - (load.get(b) ?? 0))[0]
         }
 
-        const customer = await resolveCustomer(tx, tenant.id, input.customer)
-        const phone = (input.customer.kind === 'guest' ? input.customer.phone : input.customer.phone) ?? customer.phone
-        const notifyWhatsapp = input.notifyWhatsapp && !!phone && tenant.whatsappEnabled
-        if (notifyWhatsapp) await recordWhatsappConsent(tx, tenant.id, customer, input.consentSource ?? 'booking_form')
+        const resolved = await resolveCustomer(tx, tenant.id, input.customer)
+        const { customer } = resolved
+        const { phone, notifyWhatsapp } = await contactChannels(tx, tenant, resolved, input.customer, input.notifyWhatsapp, input.consentSource ?? 'booking_form')
 
         const status: BookingStatus = input.source === 'ONLINE' && tenant.requireApproval ? 'PENDING' : 'CONFIRMED'
         const created = await tx.booking.create({
@@ -199,15 +224,14 @@ export async function createGroupBooking(input: CommonInput & { sessionId: strin
       const taken = await tx.booking.count({ where: { groupSessionId: session.id, status: { in: [...ACTIVE_STATUSES] } } })
       if (taken >= session.capacity) throw new BookingError('FULL', 'Dieser Kurstermin ist leider ausgebucht.')
 
-      const customer = await resolveCustomer(tx, tenant.id, input.customer)
+      const resolved = await resolveCustomer(tx, tenant.id, input.customer)
+      const { customer } = resolved
       const already = await tx.booking.count({
         where: { groupSessionId: session.id, customerId: customer.id, status: { in: [...ACTIVE_STATUSES] } },
       })
       if (already) throw new BookingError('ALREADY_BOOKED', 'Sie haben für diesen Kurstermin bereits einen Platz.')
 
-      const phone = (input.customer.kind === 'guest' ? input.customer.phone : input.customer.phone) ?? customer.phone
-      const notifyWhatsapp = input.notifyWhatsapp && !!phone && tenant.whatsappEnabled
-      if (notifyWhatsapp) await recordWhatsappConsent(tx, tenant.id, customer, input.consentSource ?? 'booking_form')
+      const { phone, notifyWhatsapp } = await contactChannels(tx, tenant, resolved, input.customer, input.notifyWhatsapp, input.consentSource ?? 'booking_form')
 
       const status: BookingStatus = input.source === 'ONLINE' && tenant.requireApproval ? 'PENDING' : 'CONFIRMED'
       const created = await tx.booking.create({
@@ -416,10 +440,9 @@ export async function joinWaitlist(input: {
       throw new BookingError('NOT_FOUND', 'Bitte einen Tag wählen.')
     }
     if (expiresAt.getTime() < Date.now()) throw new BookingError('INVALID_STATE', 'Dieser Tag liegt in der Vergangenheit.')
-    const customer = await resolveCustomer(tx, tenant.id, input.customer)
-    const phone = (input.customer.kind === 'guest' ? input.customer.phone : input.customer.phone) ?? customer.phone
-    const notifyWhatsapp = input.notifyWhatsapp && !!phone && tenant.whatsappEnabled
-    if (notifyWhatsapp) await recordWhatsappConsent(tx, tenant.id, customer, 'waitlist_form')
+    const resolved = await resolveCustomer(tx, tenant.id, input.customer)
+    const { customer } = resolved
+    const { notifyWhatsapp } = await contactChannels(tx, tenant, resolved, input.customer, input.notifyWhatsapp, 'waitlist_form')
     await tx.waitlistEntry.create({
       data: {
         tenantId: tenant.id,

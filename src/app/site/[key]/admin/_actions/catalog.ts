@@ -10,7 +10,7 @@ import { isValidDateString, timeToMinutes, zonedInstant, addDays } from '@/lib/t
 import { cancelBooking, BookingError, createGroupBooking } from '@/lib/booking/service'
 import { normalizePhone } from '@/lib/phone'
 import { audit } from '@/lib/audit'
-import { checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { boundId, checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
 
 // ---------- Leistungen ----------
 
@@ -28,6 +28,7 @@ const serviceSchema = z.object({
 })
 
 export async function saveServiceAction(serviceId: string | null, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  if (serviceId !== null) boundId(serviceId)
   const ctx = await requireStaff({ permission: 'services.manage' })
   const parsed = serviceSchema.safeParse(formObject(formData))
   if (!parsed.success) return { error: 'Bitte prüfe die Angaben.', fieldErrors: zodFieldErrors(parsed.error) }
@@ -78,6 +79,7 @@ export async function saveServiceAction(serviceId: string | null, _prev: ActionS
 }
 
 export async function deleteServiceAction(serviceId: string, _prev: ActionState): Promise<ActionState> {
+  boundId(serviceId)
   const ctx = await requireStaff({ permission: 'services.manage' })
   const service = await db.service.findFirst({ where: { id: serviceId, tenantId: ctx.tenant.id }, include: { _count: { select: { bookings: true } } } })
   if (!service) return { error: 'Leistung nicht gefunden.' }
@@ -97,6 +99,7 @@ const resourceSchema = z.object({
 })
 
 export async function saveResourceAction(resourceId: string | null, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  if (resourceId !== null) boundId(resourceId)
   const ctx = await requireStaff({ permission: 'hours.manage' })
   const parsed = resourceSchema.safeParse(formObject(formData))
   if (!parsed.success) return { error: 'Bitte prüfe die Angaben.', fieldErrors: zodFieldErrors(parsed.error) }
@@ -167,6 +170,7 @@ export async function addAbsenceAction(_prev: ActionState, formData: FormData): 
 }
 
 export async function deleteAbsenceAction(id: string, _prev: ActionState): Promise<ActionState> {
+  boundId(id)
   const ctx = await requireStaff({ permission: 'hours.manage' })
   await db.timeOff.deleteMany({ where: { id, tenantId: ctx.tenant.id } })
   refresh()
@@ -213,6 +217,7 @@ export async function createSessionAction(_prev: ActionState, formData: FormData
 }
 
 export async function cancelSessionAction(sessionId: string, _prev: ActionState): Promise<ActionState> {
+  boundId(sessionId)
   const ctx = await requireStaff({ permission: 'services.manage' })
   const session = await db.groupSession.findFirst({ where: { id: sessionId, tenantId: ctx.tenant.id, cancelledAt: null }, include: { bookings: { where: { status: { in: ['PENDING', 'CONFIRMED'] } } } } })
   if (!session) return { error: 'Kurstermin nicht gefunden.' }
@@ -229,6 +234,7 @@ const participantSchema = z.object({
 })
 
 export async function addParticipantAction(sessionId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  boundId(sessionId)
   const ctx = await requireStaff({ permission: 'services.manage' })
   const parsed = participantSchema.safeParse(formObject(formData))
   if (!parsed.success) return { error: 'Bitte prüfe die Angaben.', fieldErrors: zodFieldErrors(parsed.error) }

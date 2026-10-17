@@ -84,8 +84,8 @@ export default async function ManageBookingPage({
             </dd>
           </div>
           <div className="grid grid-cols-[8rem_1fr] gap-3 px-5 py-3">
-            <dt className="text-graphite">Gebucht für</dt>
-            <dd>{booking.customer?.name}</dd>
+            <dt className="text-graphite">Kontakt</dt>
+            <dd>{[booking.customer?.email, booking.phone ? formatPhone(booking.phone) : null].filter(Boolean).join(', ') || '–'}</dd>
           </div>
           <div className="grid grid-cols-[8rem_1fr] gap-3 px-5 py-3">
             <dt className="text-graphite">Nachrichten</dt>

@@ -12,6 +12,7 @@ import { sendPasswordResetEmail } from '@/lib/notifications/auth-emails'
 import { rateLimit } from '@/lib/rate-limit'
 import { clientIp } from '@/lib/request'
 import { audit } from '@/lib/audit'
+import { requireStaff } from '@/lib/auth/guards'
 import { formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
 
 const loginSchema = z.object({
@@ -105,9 +106,8 @@ export async function acceptInviteAction(token: string, _prev: ActionState, form
 }
 
 export async function revokeOwnSessionsAction(): Promise<ActionState> {
-  const session = await readStaffSession()
-  if (!session) redirect('/admin/login')
-  await revokeOtherSessions('staff', { userId: session.user.id })
-  await audit({ tenantId: session.tenantId, actorType: 'USER', actorId: session.user.id, action: 'auth.sessions_revoked' })
+  const ctx = await requireStaff({ allowMissing2fa: true })
+  await revokeOtherSessions('staff', { userId: ctx.user.id })
+  await audit({ tenantId: ctx.tenant.id, actorType: 'USER', actorId: ctx.user.id, action: 'auth.sessions_revoked' })
   return { ok: true, message: 'Alle anderen Geräte wurden abgemeldet.' }
 }

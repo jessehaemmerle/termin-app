@@ -88,6 +88,7 @@ Siehe [`docs/betrieb.md`](docs/betrieb.md): Docker Compose mit Caddy, Datenbank 
 | --- | --- |
 | [`docs/betrieb.md`](docs/betrieb.md) | Installation, Updates, Backups, Schlüsselrotation, Vertragsende |
 | [`docs/whatsapp.md`](docs/whatsapp.md) | WhatsApp-Einrichtung für Betriebe, Vorlagen |
+| [`docs/sicherheitsreview.md`](docs/sicherheitsreview.md) | Ergebnisse der internen Sicherheitsprüfung, akzeptierte Restrisiken |
 | [`docs/rechtliches/`](docs/rechtliches/) | Prüfexemplare: Impressum, Datenschutzerklärungen, Buchungsbedingungen, Barrierefreiheit, Nutzungsbedingungen, AVV mit TOM (erzeugt mit `npx tsx scripts/export-legal.ts`) |
 | [`docs/datenschutz/verarbeitungsverzeichnis.md`](docs/datenschutz/verarbeitungsverzeichnis.md) | Art. 30 für Plattform und Vorlage für Betriebe |
 | [`docs/datenschutz/dsfa-schwellwertanalyse.md`](docs/datenschutz/dsfa-schwellwertanalyse.md) | Art. 35, DSFA-V/DSFA-AV, WP 248 |
@@ -106,7 +107,7 @@ Siehe [`docs/betrieb.md`](docs/betrieb.md): Docker Compose mit Caddy, Datenbank 
 - [ ] DPF-Zertifizierung von Meta prüfen und im TIA dokumentieren; aktuelle Graph-API-Version in `WHATSAPP_GRAPH_VERSION` setzen
 - [ ] Plattformnamen auf Markenrechte prüfen (ÖPA/EUIPO), `PLATFORM_NAME` setzen
 - [ ] Backups einrichten und Wiederherstellung testen
-- [ ] Penetrationstest bzw. externes Security-Review vor Produktivbetrieb mit echten Kundendaten
+- [ ] Penetrationstest bzw. externes Security-Review vor Produktivbetrieb mit echten Kundendaten; offene Punkte aus [`docs/sicherheitsreview.md`](docs/sicherheitsreview.md) bewerten
 
 ## Projektstruktur
 

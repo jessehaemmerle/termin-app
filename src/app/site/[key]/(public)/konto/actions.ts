@@ -19,7 +19,7 @@ import { WHATSAPP_CONSENT_VERSION } from '@/lib/legal/consent'
 import { rateLimit } from '@/lib/rate-limit'
 import { clientIp } from '@/lib/request'
 import { audit } from '@/lib/audit'
-import { checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { boundOneOf, checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
 
 async function accountsEnabled() {
   const tenant = await requireTenant()
@@ -100,6 +100,7 @@ const setPasswordSchema = z
 
 /** Abschluss der Registrierung bzw. Passwort zurücksetzen. */
 export async function setCustomerPasswordAction(purpose: 'EMAIL_VERIFY' | 'PASSWORD_RESET', token: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  boundOneOf(purpose, ['EMAIL_VERIFY', 'PASSWORD_RESET'] as const)
   const tenant = await accountsEnabled()
   const record = await findValidAuthToken(purpose, token)
   const customer = record?.customerId ? await db.customer.findFirst({ where: { id: record.customerId, tenantId: tenant.id } }) : null

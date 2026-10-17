@@ -9,7 +9,7 @@ import { BookingError, cancelBooking, createIndividualBooking, rescheduleBooking
 import { isValidDateString, timeToMinutes, zonedInstant } from '@/lib/time'
 import { normalizePhone } from '@/lib/phone'
 import { audit } from '@/lib/audit'
-import { checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { boundId, boundOneOf, checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
 
 /** Mitarbeiter:innen dürfen nur eigene Termine bearbeiten. */
 async function loadBooking(ctx: StaffContext, bookingId: string) {
@@ -20,6 +20,7 @@ async function loadBooking(ctx: StaffContext, bookingId: string) {
 }
 
 async function run(bookingId: string, fn: (ctx: StaffContext) => Promise<unknown>, success: string): Promise<ActionState> {
+  boundId(bookingId)
   const ctx = await requireStaff()
   try {
     await loadBooking(ctx, bookingId)
@@ -54,6 +55,7 @@ export async function cancelBookingByBusinessAction(bookingId: string, _prev: Ac
 }
 
 export async function setOutcomeAction(bookingId: string, outcome: 'COMPLETED' | 'NO_SHOW', _prev: ActionState): Promise<ActionState> {
+  boundOneOf(outcome, ['COMPLETED', 'NO_SHOW'] as const)
   return run(bookingId, async (ctx) => {
     await setBookingOutcome(ctx.tenant, bookingId, outcome)
   }, outcome === 'COMPLETED' ? 'Als erledigt markiert.' : 'Als nicht erschienen markiert.')
@@ -100,7 +102,8 @@ export async function createAdminBookingAction(_prev: ActionState, formData: For
   if (data.telefon && !phone) return { error: 'Bitte prüfe die Angaben.', fieldErrors: { telefon: 'Ungültige Telefonnummer.' } }
 
   let customer: CustomerInput
-  if (data.kunde) {
+  // Bestehende Kund:innen auswählen dürfen nur Rollen mit Zugriff auf die Kundenliste
+  if (data.kunde && can(ctx.role, 'customers.manage')) {
     customer = { kind: 'account', customerId: data.kunde, phone }
   } else {
     if (!data.name || data.name.length < 2) return { error: 'Bitte prüfe die Angaben.', fieldErrors: { name: 'Bitte den Namen angeben.' } }

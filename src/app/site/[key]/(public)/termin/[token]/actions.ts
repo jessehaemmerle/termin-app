@@ -41,18 +41,29 @@ export async function withdrawWhatsappAction(token: string, _prev: ActionState):
     throw error
   }
   const booking = await findBookingByToken(tenant, token)
-  if (!booking?.customerId) return { error: 'Termin nicht gefunden.' }
-  await db.$transaction([
-    db.booking.updateMany({ where: { tenantId: tenant.id, customerId: booking.customerId, startsAt: { gt: new Date() } }, data: { notifyWhatsapp: false } }),
-    db.customer.update({ where: { id: booking.customerId }, data: { whatsappOptIn: false } }),
-    db.consentRecord.create({
-      data: { tenantId: tenant.id, customerId: booking.customerId, channel: 'WHATSAPP', granted: false, textVersion: WHATSAPP_CONSENT_VERSION, source: 'manage_link' },
-    }),
-    db.notification.updateMany({
-      where: { tenantId: tenant.id, channel: 'WHATSAPP', status: 'PENDING', booking: { customerId: booking.customerId } },
-      data: { status: 'SKIPPED' },
-    }),
-  ])
+  if (!booking?.customerId || !booking.customer) return { error: 'Termin nicht gefunden.' }
+  const { customerId, phone } = booking
+  if (phone) {
+    // Der Link belegt nur die bei dieser Buchung angegebene Nummer. Die gespeicherte Einwilligung
+    // wird nur widerrufen, wenn sie genau diese Nummer betrifft – sonst könnte jemand mit einer
+    // fremden E-Mail-Adresse buchen und die Einwilligung einer anderen Person widerrufen.
+    const consented = phone === booking.customer.phone
+    await db.$transaction([
+      db.booking.updateMany({ where: { tenantId: tenant.id, customerId, phone, startsAt: { gt: new Date() } }, data: { notifyWhatsapp: false } }),
+      db.notification.updateMany({
+        where: { tenantId: tenant.id, channel: 'WHATSAPP', status: 'PENDING', booking: { customerId, phone } },
+        data: { status: 'SKIPPED' },
+      }),
+      ...(consented
+        ? [
+            db.customer.update({ where: { id: customerId }, data: { whatsappOptIn: false } }),
+            db.consentRecord.create({
+              data: { tenantId: tenant.id, customerId, channel: 'WHATSAPP', granted: false, textVersion: WHATSAPP_CONSENT_VERSION, source: 'manage_link' },
+            }),
+          ]
+        : []),
+    ])
+  }
   await audit({ tenantId: tenant.id, actorType: 'CUSTOMER', actorId: booking.customerId, action: 'customer.consent', entityType: 'Customer', entityId: booking.customerId, detail: 'WhatsApp widerrufen' })
   return { ok: true, message: 'WhatsApp-Benachrichtigungen sind beendet. Sie erhalten weiterhin E-Mails zu Ihren Terminen.' }
 }

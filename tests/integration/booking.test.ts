@@ -109,6 +109,39 @@ describe('Buchung', () => {
     expect(consent).toMatchObject({ granted: true, channel: 'WHATSAPP' })
   })
 
+  it('lässt Gastbuchungen mit fremder E-Mail-Adresse den bestehenden Datensatz weder ändern noch auslesen', async () => {
+    await db.tenant.update({ where: { id: tenant.id }, data: { whatsappEnabled: true } })
+    tenant = await db.tenant.findUniqueOrThrow({ where: { id: tenant.id } })
+    const victim = await db.customer.create({
+      data: { tenantId: tenant.id, name: 'Vera Echt', email: 'vera@example.com', phone: '+436641111111', passwordHash: 'x' },
+    })
+    const { booking } = await createIndividualBooking({
+      tenant,
+      serviceId,
+      staffId,
+      start: zonedInstant(tomorrow(), 14 * 60, TZ),
+      customer: { kind: 'guest', name: 'Angreifer', email: 'VERA@example.com', phone: '+436649999999' },
+      notifyWhatsapp: true,
+      source: 'ONLINE',
+    })
+    const after = await db.customer.findUniqueOrThrow({ where: { id: victim.id } })
+    expect(after).toMatchObject({ name: 'Vera Echt', phone: '+436641111111', whatsappOptIn: false })
+    expect(await db.consentRecord.count({ where: { customerId: victim.id } })).toBe(0)
+    expect(booking).toMatchObject({ customerId: victim.id, phone: '+436649999999', notifyWhatsapp: false })
+
+    // ohne eigene Nummer wird die gespeicherte nicht übernommen
+    const second = await createIndividualBooking({
+      tenant,
+      serviceId,
+      staffId,
+      start: zonedInstant(tomorrow(), 16 * 60, TZ),
+      customer: { kind: 'guest', name: 'Angreifer', email: 'vera@example.com', phone: null },
+      notifyWhatsapp: false,
+      source: 'ONLINE',
+    })
+    expect(second.booking.phone).toBeNull()
+  })
+
   it('verhindert Überbuchung von Kursen und benachrichtigt die Warteliste bei Absage', async () => {
     const course = await db.service.create({ data: { tenantId: tenant.id, name: 'Kurs', kind: 'GROUP', durationMinutes: 60, groupCapacity: 1 } })
     const startsAt = zonedInstant(addDays(today(TZ), 3), 18 * 60, TZ)

@@ -14,7 +14,7 @@ import { beginTotp, confirmTotp } from '@/lib/auth/two-factor'
 import { createAuthToken } from '@/lib/auth/tokens'
 import { sendInviteEmail } from '@/lib/notifications/auth-emails'
 import { audit } from '@/lib/audit'
-import { formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { boundId, boundOneOf, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
 
 const loginSchema = z.object({
   email: z.email({ error: 'Bitte die E-Mail-Adresse eingeben.' }).max(200),
@@ -107,6 +107,8 @@ export async function createTenantAction(_prev: ActionState, formData: FormData)
 }
 
 export async function setTenantStatusAction(tenantId: string, status: 'ACTIVE' | 'SUSPENDED', _prev: ActionState): Promise<ActionState> {
+  boundId(tenantId)
+  boundOneOf(status, ['ACTIVE', 'SUSPENDED'] as const)
   const admin = await requirePlatformAdmin()
   await db.tenant.update({ where: { id: tenantId }, data: { status } })
   if (status === 'SUSPENDED') await db.session.deleteMany({ where: { tenantId } })
@@ -115,22 +117,34 @@ export async function setTenantStatusAction(tenantId: string, status: 'ACTIVE' |
   return { ok: true, message: status === 'ACTIVE' ? 'Betrieb freigeschaltet.' : 'Betrieb gesperrt, alle Sitzungen beendet.' }
 }
 
+/**
+ * Neue Einladung für die Inhaberin bzw. den Inhaber – nur solange der Betrieb noch nicht
+ * eingerichtet ist. Danach lädt der Betrieb selbst ein; sonst könnte die Plattform über eine
+ * offene Einladung Zugang zu den Kundendaten erhalten (Auftragsverarbeitung, Art. 28 DSGVO).
+ */
 export async function resendOwnerInviteAction(tenantId: string, _prev: ActionState): Promise<ActionState> {
-  await requirePlatformAdmin()
+  boundId(tenantId)
+  const admin = await requirePlatformAdmin()
   const tenant = await db.tenant.findUnique({ where: { id: tenantId } })
-  const owner = tenant ? await db.user.findFirst({ where: { tenantId, role: 'OWNER', passwordHash: null } }) : null
-  if (!tenant || !owner) return { error: 'Keine offene Einladung vorhanden.' }
+  if (!tenant) return { error: 'Betrieb nicht gefunden.' }
+  const activeOwners = await db.user.count({ where: { tenantId, role: 'OWNER', passwordHash: { not: null } } })
+  if (activeOwners > 0) return { error: 'Der Betrieb ist bereits eingerichtet. Weitere Zugänge vergibt die Inhaberin bzw. der Inhaber selbst.' }
+  const owner = await db.user.findFirst({ where: { tenantId, role: 'OWNER', passwordHash: null }, orderBy: { createdAt: 'asc' } })
+  if (!owner) return { error: 'Keine offene Einladung vorhanden.' }
   const token = await createAuthToken('INVITE', { userId: owner.id })
   const link = tenantUrl(tenant, `/admin/einladung/${token}`)
   await sendInviteEmail(tenant, owner.email, 'Das Plattform-Team', link).catch((e) => console.error(e))
+  await audit({ tenantId: tenant.id, actorType: 'PLATFORM_ADMIN', actorId: admin.id, action: 'user.invited', detail: `Einladung erneut an ${owner.email}` })
   return { ok: true, message: 'Neue Einladung erstellt.', data: { inviteLink: link } }
 }
+
 
 /**
  * Löscht einen Betrieb mit allen Daten endgültig (Vertragsende, Art. 28 Abs. 3 lit. g DSGVO).
  * Nur für gesperrte Betriebe; Bestätigung durch Eingabe der Subdomain.
  */
 export async function deleteTenantAction(tenantId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  boundId(tenantId)
   const admin = await requirePlatformAdmin()
   const tenant = await db.tenant.findUnique({ where: { id: tenantId } })
   if (!tenant) return { error: 'Betrieb nicht gefunden.' }

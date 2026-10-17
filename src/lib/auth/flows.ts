@@ -69,13 +69,12 @@ export async function checkSecondFactor(kind: AccountKind, account: Account, cod
 
 export function loginErrorMessage(result: LoginCheck, formal: boolean): string {
   switch (result) {
-    case 'locked':
-      return `Zu viele Fehlversuche. Das Konto ist für ${LOCK_MINUTES} Minuten gesperrt.`
     case 'rate_limited':
       return formal
         ? 'Zu viele Anmeldeversuche. Bitte warten Sie kurz und versuchen Sie es erneut.'
         : 'Zu viele Anmeldeversuche. Bitte warte kurz und versuche es erneut.'
     default:
-      return 'E-Mail-Adresse oder Passwort ist nicht korrekt.'
+      // Gleiche Meldung bei gesperrtem Konto, sonst ließe sich so feststellen, ob ein Konto existiert
+      return `E-Mail-Adresse oder Passwort ist nicht korrekt. Nach mehreren Fehlversuchen ist die Anmeldung für ${LOCK_MINUTES} Minuten gesperrt.`
   }
 }

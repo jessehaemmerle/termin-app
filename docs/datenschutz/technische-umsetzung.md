@@ -11,10 +11,14 @@ Zuordnung der Anforderungen zu den Stellen im Code – als Nachweis (Art. 5 Abs.
 | Sitzungen | 256-Bit-Zufallstoken, in der DB nur SHA-256-Hash, HttpOnly, SameSite=Lax, Secure + `__Host-` in Produktion, 30 Tage absolut, „Alle Geräte abmelden“ | `src/lib/auth/session.ts` |
 | Einmal-Links | 256 Bit, nur Hash gespeichert, kurze Gültigkeit, Einmalverwendung | `src/lib/auth/tokens.ts` |
 | Sichere Registrierung | Passwort erst nach E-Mail-Bestätigung festlegbar (keine Kontoübernahme fremder Gastdaten); keine Auskunft, ob ein Konto existiert | `src/app/site/[key]/(public)/konto/actions.ts` |
+| Gastbuchungen ohne Zugriff auf fremde Daten | Gastangaben, die zu einem bestehenden Datensatz passen, ändern Name, Telefonnummer und Einwilligungen nicht und lesen nichts daraus; der Verwaltungslink zeigt nur die bei der Buchung angegebenen Kontaktdaten und widerruft nur die dort angegebene Nummer | `src/lib/booking/service.ts` (`resolveCustomer`, `contactChannels`), `src/app/site/[key]/(public)/termin/[token]/*` |
+| Kein Plattformzugriff auf Betriebsdaten | Plattform-Admins können die Inhaber:in nur einladen, solange der Betrieb noch nicht eingerichtet ist; danach vergibt der Betrieb Zugänge selbst | `src/app/platform/_actions.ts` |
+| SSRF-Schutz | Eigene SMTP-Server der Betriebe: nur öffentliche Adressen (Auflösung wird geprüft und fest verwendet), nur Ports 25/465/587/2525, keine Serverantworten an die Oberfläche; gespeichertes Passwort wird nur an denselben Server gesendet | `src/lib/net.ts`, `src/lib/notifications/mailer.ts`, `src/app/site/[key]/admin/_actions/settings.ts` |
+| Server-Action-Argumente | Gebundene Argumente (IDs, Status) werden zur Laufzeit geprüft, damit keine Datenbankfilter eingeschleust werden können | `src/lib/actions.ts` (`boundId`, `boundOneOf`) |
 | Verschlüsselung ruhender Geheimnisse | AES-256-GCM für SMTP-Passwörter, WhatsApp-Token, TOTP-Geheimnisse, Verwaltungslinks | `src/lib/crypto.ts` |
 | Transportverschlüsselung | TLS über Caddy (automatisch Let’s Encrypt), HSTS, `upgrade-insecure-requests` | `deploy/Caddyfile`, `src/proxy.ts` |
 | Content-Security-Policy | Nonce pro Anfrage, `strict-dynamic`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'none'` | `src/proxy.ts` |
-| Weitere Header | `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options`, COOP | `next.config.ts` |
+| Weitere Header | `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options`, COOP | `next.config.mjs` |
 | CSRF | Origin-Prüfung von Next.js für Server Actions; eigene Prüfung für Route-Handler | Next.js, `src/lib/same-origin.ts` |
 | Eingabevalidierung | zod-Schemas in allen Server Actions; Telefonnummern via libphonenumber | `src/app/**/actions.ts`, `src/lib/phone.ts` |
 | Bot-Schutz ohne Drittanbieter | Honeypot, Mindestbearbeitungszeit, Rate-Limit pro IP (nur Arbeitsspeicher) | `src/lib/booking/public-form.ts`, `src/lib/rate-limit.ts` |

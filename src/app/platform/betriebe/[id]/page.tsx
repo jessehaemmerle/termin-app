@@ -18,7 +18,8 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
     db.$transaction([db.user.count({ where: { tenantId: id } }), db.service.count({ where: { tenantId: id } })]),
   ])
   const tz = 'Europe/Vienna'
-  const pendingInvite = owners.some((o) => !o.passwordHash)
+  // Neue Einladungen durch die Plattform nur, solange der Betrieb noch nicht eingerichtet ist
+  const pendingInvite = owners.some((o) => !o.passwordHash) && !owners.some((o) => o.passwordHash)
   return (
     <div className="max-w-3xl space-y-6">
       <Link href={platformPath('/betriebe')} className="text-sm">Alle Betriebe</Link>

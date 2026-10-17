@@ -38,3 +38,17 @@ export function checkbox(formData: FormData, name: string): boolean {
   const v = formData.get(name)
   return v === 'on' || v === 'true' || v === '1'
 }
+
+/**
+ * Mit `action.bind(null, …)` gebundene Argumente kommen ungeprüft vom Client und können auch
+ * Objekte sein (z. B. Prisma-Filter wie `{ in: [...] }`). Deshalb vor jeder Verwendung prüfen.
+ */
+export function boundId(value: unknown): string {
+  if (typeof value !== 'string' || !/^[a-z0-9]{1,40}$/i.test(value)) throw new Error('Ungültige Kennung.')
+  return value
+}
+
+export function boundOneOf<T extends string>(value: unknown, allowed: readonly T[]): T {
+  if (typeof value !== 'string' || !(allowed as readonly string[]).includes(value)) throw new Error('Ungültiger Wert.')
+  return value as T
+}
