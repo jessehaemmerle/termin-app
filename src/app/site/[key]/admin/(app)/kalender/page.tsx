@@ -152,13 +152,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     return { top: (start - gridStart) * PX_PER_MIN, height: Math.max(26, (end - start) * PX_PER_MIN) }
   }
 
+  // Der Tageskalender scrollt am Handy waagrecht: per Tastatur erreichbar (tabIndex, WCAG 2.1.1)
   return (
     <>
       {header}
       {staffFilter.length === 0 ? (
         <p className="text-graphite">Es sind keine buchbaren Personen angelegt.</p>
       ) : (
-        <div className="bg-surface border border-rule rounded-[var(--radius-sheet)] overflow-x-auto">
+        <div tabIndex={0} role="region" aria-label="Tageskalender" className="bg-surface border border-rule rounded-[var(--radius-sheet)] overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2">
           <div className="grid min-w-fit" style={{ gridTemplateColumns: `3.5rem repeat(${staffFilter.length}, minmax(9.5rem, 1fr))` }}>
             <div className="sticky left-0 z-10 bg-surface border-b border-rule" />
             {staffFilter.map((s) => (

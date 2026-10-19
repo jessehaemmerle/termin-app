@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { local, tenant, tenantHeaders } from './helpers'
+import { local, tenant, tenantHeaders, staffLogin } from './helpers'
 
 test.describe('PWA', () => {
   test('liefert ein Manifest pro Betrieb und registriert den Service Worker', async ({ page, request }) => {
@@ -56,11 +56,7 @@ test.describe('Barrierefreiheit (WCAG 2.1 AA, axe)', () => {
   })
 
   test('Verwaltung: Heute und Kalender', async ({ page }) => {
-    await page.goto(tenant('huber', '/admin/login'))
-    await page.getByLabel('E-Mail-Adresse').fill('chef@huber.example')
-    await page.getByLabel('Passwort').fill('demo-passwort-123')
-    await page.getByRole('button', { name: 'Anmelden' }).click()
-    await expect(page).toHaveURL(/\/admin/)
+    await staffLogin(page, 'huber', 'chef@huber.example')
     for (const path of ['/admin', '/admin/kalender', '/admin/einstellungen/darstellung']) {
       await page.goto(tenant('huber', path))
       const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()
