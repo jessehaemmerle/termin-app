@@ -6,7 +6,20 @@ import { buttonClass } from '@/components/ui'
 
 export async function generateMetadata(): Promise<Metadata> {
   const name = env().PLATFORM_NAME
-  return { title: { default: name, template: `%s – ${name}` }, description: `${name}: Online-Terminbuchung für kleine Betriebe` }
+  return {
+    title: { default: name, template: `%s – ${name}` },
+    description: `${name}: Online-Terminbuchung für kleine Betriebe`,
+    manifest: '/brand/site.webmanifest',
+    icons: {
+      icon: [
+        { url: '/brand/favicon.ico', sizes: 'any' },
+        { url: '/brand/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+        { url: '/brand/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      ],
+      apple: { url: '/brand/apple-touch-icon.png', sizes: '180x180' },
+    },
+    openGraph: { images: [{ url: '/brand/android-chrome-512x512.png', width: 512, height: 512 }] },
+  }
 }
 
 export default function PlatformLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +30,11 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
       <a href="#inhalt" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-surface focus:px-4 focus:py-2">Zum Inhalt springen</a>
       <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-rule safe-top">
         <div className="mx-auto max-w-6xl px-4 min-h-16 flex items-center justify-between gap-4">
-          <Link href={home} className="font-display text-xl font-semibold no-underline text-ink whitespace-nowrap">{e.PLATFORM_NAME}</Link>
+          <Link href={home} className="inline-flex items-center gap-2 font-display text-xl font-semibold no-underline text-ink whitespace-nowrap">
+            {/* eslint-disable-next-line @next/next/no-img-element -- statisches Logo, keine Optimierung nötig */}
+            <img src="/brand/android-chrome-192x192.png" alt="" width={40} height={40} className="size-10 -my-1" />
+            {e.PLATFORM_NAME}
+          </Link>
           <nav aria-label="Hauptnavigation" className="flex items-center gap-1 sm:gap-5">
             <ul className="hidden md:flex items-center gap-5 text-sm">
               <li><Link href={`${home}#funktionen`} className="no-underline text-ink hover:text-brand-text">Funktionen</Link></li>
@@ -34,7 +51,11 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
       <footer className="border-t border-rule bg-surface safe-bottom">
         <div className="mx-auto max-w-6xl px-4 py-10 grid gap-8 sm:grid-cols-[1.5fr_1fr_1fr] text-sm">
           <div className="space-y-2">
-            <p className="font-display text-lg font-semibold">{e.PLATFORM_NAME}</p>
+            <p className="inline-flex items-center gap-2 font-display text-lg font-semibold">
+              {/* eslint-disable-next-line @next/next/no-img-element -- statisches Logo */}
+              <img src="/brand/android-chrome-192x192.png" alt="" width={36} height={36} className="size-9" />
+              {e.PLATFORM_NAME}
+            </p>
             <p className="text-graphite max-w-xs">Online-Terminbuchung für kleine Betriebe. Gehostet in der EU, ohne Tracking.</p>
             {e.OPERATOR_EMAIL && <p><a href={`mailto:${e.OPERATOR_EMAIL}`}>{e.OPERATOR_EMAIL}</a></p>}
           </div>
