@@ -78,6 +78,8 @@ export async function runRetention(now = new Date()) {
   await db.authToken.deleteMany({ where: { OR: [{ expiresAt: { lt: new Date(now.getTime() - 24 * HOUR) } }, { usedAt: { lt: new Date(now.getTime() - 24 * HOUR) } }] } })
   await db.notification.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 90 * 24 * HOUR) }, status: { in: ['SENT', 'SKIPPED', 'FAILED'] } } })
   await db.auditLog.deleteMany({ where: { createdAt: { lt: monthsAgo(now, 12) } } })
+  // Zugangsanfragen über die Plattform-Website: 6 Monate (Datenschutzerklärung der Plattform)
+  await db.accessRequest.deleteMany({ where: { createdAt: { lt: monthsAgo(now, 6) } } })
   await db.pushSubscription.deleteMany({ where: { user: { active: false } } })
   return summary
 }

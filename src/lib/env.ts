@@ -22,6 +22,10 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL fehlt'),
   PLATFORM_BASE_URL: z.url().default('http://localhost:3000'),
   PLATFORM_NAME: text('Termin-App'),
+  /** Preisangabe auf der Plattform-Website, z. B. „29 €“ (leer: „auf Anfrage“) */
+  PRICE_MONTHLY: text(),
+  /** Zusatz zum Preis, z. B. „pro Monat zzgl. 20 % USt., monatlich kündbar“ */
+  PRICE_NOTE: text('pro Monat zzgl. USt., monatlich kündbar'),
   SINGLE_TENANT_SLUG: optional,
   APP_ENCRYPTION_KEY: z
     .string()

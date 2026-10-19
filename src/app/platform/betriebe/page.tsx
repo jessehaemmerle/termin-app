@@ -18,8 +18,14 @@ export default async function TenantsPage() {
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true, slug: true, status: true, createdAt: true, dpaAcceptedAt: true, dpaVersion: true, customDomain: true, customDomainVerifiedAt: true, _count: { select: { users: true } } },
   })
+  const newRequests = await db.accessRequest.count({ where: { status: 'NEW' } })
   return (
     <div className="space-y-8">
+      <p>
+        <Link href={platformPath('/betriebe/anfragen')} className="font-semibold">
+          Zugangsanfragen{newRequests > 0 ? ` (${newRequests} neu)` : ''}
+        </Link>
+      </p>
       <PageTitle
         title="Betriebe"
         description="Plattform-Admins sehen nur Stammdaten der Betriebe – keine Kunden- oder Termindaten (Auftragsverarbeitung nur auf Weisung)."

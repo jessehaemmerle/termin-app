@@ -25,6 +25,8 @@ White-Label-Plattform für die Online-Terminbuchung kleiner Betriebe (Friseur, K
 - Web-Push für das Team, Aktivitätsprotokoll, Gesamtexport
 
 **Für den Plattformbetreiber**
+- Website mit Funktionen, Datenschutz, Preis, häufigen Fragen und Anfrageformular; Seite „Anmelden“ führt Teams zu ihrem Betrieb
+- Zugangsanfragen im Plattformbereich (Benachrichtigung per E-Mail, automatische Löschung nach 6 Monaten)
 - Betriebe anlegen, Inhaber:in einladen, sperren, nach Vertragsende löschen
 - Keine Einsicht in Kundendaten der Betriebe (Auftragsverarbeitung nur auf Weisung)
 - Verpflichtende 2FA für Plattform-Admins

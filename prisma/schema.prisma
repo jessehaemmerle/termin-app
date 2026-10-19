@@ -589,3 +589,27 @@ model AuditLog {
 
   @@index([tenantId, createdAt])
 }
+
+enum AccessRequestStatus {
+  NEW
+  CONTACTED
+  DONE
+  REJECTED
+}
+
+/// Anfragen interessierter Betriebe über die Plattform-Website (Löschung nach 6 Monaten).
+model AccessRequest {
+  id           String              @id @default(cuid())
+  businessName String
+  contactName  String
+  email        String
+  phone        String?
+  industry     String?
+  teamSize     String?
+  message      String?
+  status       AccessRequestStatus @default(NEW)
+  createdAt    DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime            @updatedAt @db.Timestamptz(3)
+
+  @@index([createdAt])
+}

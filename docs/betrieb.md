@@ -22,6 +22,8 @@ In `.env` mindestens setzen:
 | --- | --- |
 | `PLATFORM_BASE_URL` | `https://termin-app.at` |
 | `PLATFORM_NAME` | Name der Plattform |
+| `PRICE_MONTHLY`, `PRICE_NOTE` | Preis auf der Website, z. B. `29 €` und `pro Monat zzgl. 20 % USt., monatlich kündbar` (leer: „Preis auf Anfrage“) |
+| `OPERATOR_EMAIL` | erhält Zugangsanfragen von der Website |
 | `APP_ENCRYPTION_KEY` | `openssl rand -base64 32` – **sicher aufbewahren**, ohne ihn sind gespeicherte Zugangsdaten und Verwaltungslinks nicht mehr lesbar |
 | `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | `openssl rand -base64 32` |
 | `POSTGRES_PASSWORD` | `openssl rand -hex 32` – nur Buchstaben und Ziffern, da es in die Verbindungs-URL eingesetzt wird (sonst Fehler P1013) |

@@ -36,6 +36,10 @@ Es gibt kein Tracking, keine Analyse- oder Werbe-Cookies und keine eingebundenen
 
 **Speicherdauer:** Benutzerkonten bis zur Löschung durch den Betrieb bzw. bis zum Vertragsende; Aktivitätsprotokolle 12 Monate; Sitzungen höchstens 30 Tage.
 
+## Zugangsanfragen über die Website
+
+Wenn Sie über das Formular auf unserer Website einen Zugang anfragen, verarbeiten wir den Namen des Betriebs, Ihren Namen, Ihre E-Mail-Adresse und – freiwillig – Telefonnummer, Branche, Teamgröße und Ihre Nachricht, um Ihre Anfrage zu beantworten und ein Angebot zu erstellen (Art. 6 Abs. 1 lit. b DSGVO, vorvertragliche Maßnahmen). Wir senden Ihnen keine automatische Bestätigung und keine Werbung. Die Angaben werden sechs Monate nach Eingang automatisch gelöscht, sofern kein Vertrag zustande kommt; andernfalls gelten die Fristen der Vertragsabwicklung. Zum Schutz vor automatisierten Anfragen werden Ihre IP-Adresse und die Bearbeitungszeit nur kurzzeitig im Arbeitsspeicher geprüft und nicht gespeichert.
+
 ## Kontaktaufnahme und Vertragsabwicklung mit Betrieben
 
 Wenn Sie uns kontaktieren oder ein Betrieb einen Vertrag mit uns schließt, verarbeiten wir Kontakt- und Vertragsdaten zur Bearbeitung und Abwicklung (Art. 6 Abs. 1 lit. b DSGVO) sowie zur Erfüllung gesetzlicher Aufbewahrungspflichten (Art. 6 Abs. 1 lit. c DSGVO, z. B. § 132 BAO: 7 Jahre für Buchhaltungsunterlagen).

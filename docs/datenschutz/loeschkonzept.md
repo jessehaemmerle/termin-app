@@ -16,6 +16,7 @@ Grundsatz: Daten werden **automatisch** gelöscht oder anonymisiert, sobald der 
 | Einmal-Links (Einladung, Passwort, Bestätigung) | 1–72 Stunden Gültigkeit; Löschung 24 Stunden nach Ablauf/Verwendung | Zeit | Löschung | `runRetention` |
 | Versandprotokoll von Benachrichtigungen (ohne Inhalte) | 90 Tage | Zeit | Löschung | `runRetention` |
 | Aktivitätsprotokoll | 12 Monate | Zeit | Löschung | `runRetention` |
+| Zugangsanfragen (Plattform-Website) | 6 Monate nach Eingang | Zeit | Löschung | `runRetention` |
 | Push-Abos | bei Deaktivierung, Ablauf beim Push-Dienst (404/410) oder Deaktivierung des Teamzugangs | Ereignis | Löschung | `sendPushToUser`, `runRetention` |
 | IP-Adressen | höchstens 1 Stunde, nur im Arbeitsspeicher | Zeit | Verwerfen | `src/lib/rate-limit.ts` |
 | Daten eines Betriebs nach Vertragsende | 30 Tage nach Vertragsende (vorher Gesamtexport durch den Betrieb möglich) | Vertragsende | Betrieb sperren, dann endgültig löschen (Kaskade über alle Tabellen) | Plattform-Verwaltung → Betrieb → „Endgültig löschen“ (`deleteTenantAction`) |

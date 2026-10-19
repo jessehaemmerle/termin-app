@@ -154,3 +154,22 @@ export async function deleteTenantAction(tenantId: string, _prev: ActionState, f
   await audit({ actorType: 'PLATFORM_ADMIN', actorId: admin.id, action: 'tenant.status', detail: `Betrieb ${tenant.slug} endgültig gelöscht` })
   redirect(platformPath('/betriebe'))
 }
+
+const ACCESS_REQUEST_STATUSES = ['NEW', 'CONTACTED', 'DONE', 'REJECTED'] as const
+
+export async function setAccessRequestStatusAction(requestId: string, status: (typeof ACCESS_REQUEST_STATUSES)[number], _prev: ActionState): Promise<ActionState> {
+  boundId(requestId)
+  boundOneOf(status, ACCESS_REQUEST_STATUSES)
+  await requirePlatformAdmin()
+  await db.accessRequest.updateMany({ where: { id: requestId }, data: { status } })
+  refresh()
+  return { ok: true }
+}
+
+export async function deleteAccessRequestAction(requestId: string, _prev: ActionState): Promise<ActionState> {
+  boundId(requestId)
+  await requirePlatformAdmin()
+  await db.accessRequest.deleteMany({ where: { id: requestId } })
+  refresh()
+  return { ok: true, message: 'Anfrage gelöscht.' }
+}

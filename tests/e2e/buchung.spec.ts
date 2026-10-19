@@ -22,8 +22,10 @@ test.describe('Online-Buchung', () => {
     await expect(page.locator('form [role="alert"]')).toContainText('gültige Telefonnummer')
   })
 
-  test('Anfrage mit Freigabe: Werkstatt bestätigt im Verwaltungsbereich', async ({ page, browser }) => {
-    await bookFirstSlot(page, 'huber', /Reifenwechsel/, { name: 'Erika Fahrer', email: 'erika@example.com', phone: '0664 7654321' })
+  test('Anfrage mit Freigabe: Werkstatt bestätigt im Verwaltungsbereich', async ({ page, browser }, testInfo) => {
+    // eigene Kundin je Projekt, da mobil und Desktop parallel laufen
+    const name = `Erika Fahrer ${testInfo.project.name}`
+    await bookFirstSlot(page, 'huber', /Reifenwechsel/, { name, email: `erika-${testInfo.project.name}@example.com`, phone: '0664 7654321' })
     await page.getByRole('button', { name: 'Terminanfrage senden' }).click()
     await expect(page.getByText('Ihre Anfrage ist eingegangen')).toBeVisible()
     await expect(page.getByText('Anfrage offen')).toBeVisible()
@@ -31,9 +33,10 @@ test.describe('Online-Buchung', () => {
     const admin = await browser.newPage()
     await staffLogin(admin, 'huber', 'chef@huber.example')
     await expect(admin.getByRole('heading', { name: /Offene Anfragen/ })).toBeVisible()
-    const request = admin.getByRole('listitem').filter({ hasText: 'Erika Fahrer' })
+    const request = admin.getByRole('listitem').filter({ hasText: name })
     await request.getByRole('button', { name: 'Bestätigen' }).click()
-    await expect(request).toHaveCount(0)
+    // Nicht mehr offen (liegt der Termin auf heute, steht er danach im Terminbuch)
+    await expect(request.getByRole('button', { name: 'Bestätigen' })).toHaveCount(0)
     await admin.close()
 
     await page.reload()
