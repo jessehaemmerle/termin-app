@@ -24,7 +24,7 @@ In `.env` mindestens setzen:
 | `PLATFORM_NAME` | Name der Plattform |
 | `APP_ENCRYPTION_KEY` | `openssl rand -base64 32` – **sicher aufbewahren**, ohne ihn sind gespeicherte Zugangsdaten und Verwaltungslinks nicht mehr lesbar |
 | `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | `openssl rand -base64 32` |
-| `POSTGRES_PASSWORD` | langes Zufallspasswort |
+| `POSTGRES_PASSWORD` | `openssl rand -hex 32` – nur Buchstaben und Ziffern, da es in die Verbindungs-URL eingesetzt wird (sonst Fehler P1013) |
 | `ACME_EMAIL` | Kontakt für Let’s Encrypt |
 | `OPERATOR_*`, `HOSTING_*`, `MAIL_PROVIDER` | Betreiberangaben für Impressum, Datenschutzerklärung und AVV |
 | `SMTP_*` | Plattform-E-Mail-Versand |

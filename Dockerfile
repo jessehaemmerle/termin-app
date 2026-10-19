@@ -3,6 +3,8 @@
 
 # Debian-slim statt Alpine: vorkompilierte Binärpakete (argon2, sharp) brauchen glibc.
 FROM node:22-bookworm-slim AS base
+# OpenSSL für die Prisma-Engines (sonst Warnung "failed to detect the libssl/openssl version")
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
