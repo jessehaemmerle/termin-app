@@ -1,4 +1,4 @@
-import { daysBetween, isoWeekday, localDate, MINUTE, overlaps, zonedInstant } from '../time'
+import { daysBetween, isoWeekday, localDate, localMinuteOfDay, MINUTE, overlaps, zonedInstant } from '../time'
 
 // Reine Berechnung freier Zeitfenster – ohne Datenbankzugriff, vollständig testbar.
 
@@ -85,7 +85,9 @@ export function computeSlots(q: SlotQuery): Slot[] {
       while (minute + q.durationMinutes <= w.end) {
         const start = zonedInstant(q.date, minute, q.timeZone).getTime()
         const end = start + duration
-        if (start >= earliest) {
+        // In der Sommerzeit-Lücke (z. B. 02:00–03:00 Ende März) gibt es diese Uhrzeit nicht
+        const exists = localMinuteOfDay(new Date(start), q.timeZone) === minute
+        if (exists && start >= earliest) {
           const free = isFree(staff, q.resources, q.closures, {
             start,
             end,

@@ -7,6 +7,7 @@ import { isBookable, requireTenant } from '@/lib/tenant'
 import { isValidDateString, timeToMinutes, zonedInstant } from '@/lib/time'
 import { parsePublicContact } from '@/lib/booking/public-form'
 import { BookingError, createIndividualBooking } from '@/lib/booking/service'
+import { logError } from '@/lib/log'
 
 const slotSchema = z.object({
   leistung: z.string().min(1).max(40),
@@ -43,7 +44,7 @@ export async function bookAction(_prev: ActionState, formData: FormData): Promis
     token = result.manageToken
   } catch (error) {
     if (error instanceof BookingError) return { error: error.message }
-    console.error('Buchung fehlgeschlagen', error)
+    logError('Buchung fehlgeschlagen', error)
     return { error: 'Die Buchung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.' }
   }
   redirect(`/termin/${token}?neu=1`)

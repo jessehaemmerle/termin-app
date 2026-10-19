@@ -1,4 +1,5 @@
 import { db } from './db'
+import { logError } from './log'
 
 export type AuditEntry = {
   tenantId?: string | null
@@ -25,7 +26,7 @@ export async function audit(entry: AuditEntry) {
       },
     })
   } catch (error) {
-    console.error('Audit-Log konnte nicht geschrieben werden', error)
+    logError('Audit-Log konnte nicht geschrieben werden', error)
   }
 }
 

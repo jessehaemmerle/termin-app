@@ -5,6 +5,7 @@ import { parsePriceCents, parseWeeklyHours } from '@/lib/admin/forms'
 import { addDays, isoWeekday, isValidDateString, startOfWeek, timeToMinutes, zonedInstant } from '@/lib/time'
 import { generateRecoveryCodes, generateTotpSecret, matchRecoveryCode, verifyTotp } from '@/lib/auth/totp'
 import { TOTP, Secret } from 'otpauth'
+import { scrubPersonalData } from '@/lib/log'
 
 beforeAll(() => {
   process.env.DATABASE_URL ??= 'postgresql://test@localhost/test'
@@ -90,5 +91,12 @@ describe('Zwei-Faktor', () => {
     expect(codes).toHaveLength(8)
     expect(matchRecoveryCode(hashes, codes[3].toUpperCase())).toBe(hashes[3])
     expect(matchRecoveryCode(hashes, 'falsch-1234')).toBeNull()
+  })
+})
+
+describe('Protokolle ohne Personenbezug', () => {
+  it('entfernt E-Mail-Adressen und Telefonnummern aus Fehlermeldungen', () => {
+    expect(scrubPersonalData('550 5.1.1 <maria.musterfrau@example.at>: Recipient address rejected')).toBe('550 5.1.1 <[E-Mail]>: Recipient address rejected')
+    expect(scrubPersonalData('Ungültige Nummer +43 664 1234567')).toBe('Ungültige Nummer [Telefon]')
   })
 })

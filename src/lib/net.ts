@@ -44,7 +44,36 @@ for (const [net, prefix] of [
 export function isPublicAddress(address: string): boolean {
   const family = isIP(address)
   if (family === 0) return false
+  if (family === 6) {
+    const embedded = embeddedIpv4(address)
+    if (embedded) return isPublicAddress(embedded)
+  }
   return !blocked.check(address, family === 4 ? 'ipv4' : 'ipv6')
+}
+
+/** IPv4 in IPv4-kompatiblen (::a.b.c.d), gemappten (::ffff:…) und SIIT-Adressen (::ffff:0:…). */
+function embeddedIpv4(address: string): string | null {
+  const groups = expandIpv6(address)
+  if (!groups || groups.slice(0, 4).some((g) => g !== 0)) return null
+  const [, , , , g4, g5, g6, g7] = groups
+  const v4Tail = (g4 === 0 && (g5 === 0 || g5 === 0xffff)) || (g4 === 0xffff && g5 === 0)
+  if (!v4Tail || (g4 === 0 && g5 === 0 && g6 === 0)) return null // ::, ::1 usw. regelt die Sperrliste
+  return [g6 >> 8, g6 & 255, g7 >> 8, g7 & 255].join('.')
+}
+
+function expandIpv6(address: string): number[] | null {
+  let text = address.toLowerCase().split('%')[0]
+  const v4 = text.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
+  if (v4) {
+    const [a, b, c, d] = v4.slice(1).map(Number)
+    text = text.slice(0, v4.index) + `${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`
+  }
+  const [head, tail] = text.split('::')
+  const parse = (part?: string) => (part ? part.split(':').map((g) => parseInt(g, 16)) : [])
+  const left = parse(head)
+  const right = parse(tail)
+  const groups = tail === undefined ? left : [...left, ...Array(8 - left.length - right.length).fill(0), ...right]
+  return groups.length === 8 && groups.every((g) => Number.isInteger(g) && g >= 0 && g <= 0xffff) ? groups : null
 }
 
 export class PrivateAddressError extends Error {}

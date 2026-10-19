@@ -29,3 +29,17 @@ Interne Code-Prüfung vor dem ersten Livegang, aufgeteilt in drei Bereiche: Mand
 ## Geprüft und ohne Befund
 
 Mandantentrennung (Betrieb nur aus dem Host-Header, alle Abfragen mit `tenantId`, Sitzungen an Betrieb und Host gebunden), Rollen und Rechte aller Server Actions, Seiten und Exporte, Einmal-Links (256 Bit, nur Hash, Zweck, Ablauf, Betrieb), Zwei-Faktor-Pflicht in allen Guards, Sitzungsverwaltung, Proxy und Routing (direkte Aufrufe von `/site/…` und `/platform/…`), interne Endpunkte, eigene Domains (TXT-Bestätigung, Zertifikate nur für bestätigte Domains), Logo-Upload und Auslieferung, CSP und Header, E-Mail-HTML (Maskierung, erlaubte Link-Schemata), Rechtstexte (kein rohes HTML), WhatsApp-API-Aufrufe, Web-Push, Verschlüsselung (AES-256-GCM mit zufälligem IV), Container- und Netzkonfiguration.
+
+## Nachprüfung (Oktober 2026, nach Plattform-Website)
+
+Sicherheit, Backend, Barrierefreiheit und Design wurden erneut geprüft. Keine ausnutzbaren Lücken in den neuen Teilen (Anfrageformular, Anmelden-Weiterleitung, Plattform-Manifest, Proxy-Ausnahme `/brand/`). Umgesetzt:
+
+- SSRF-Schutz erkennt auch IPv4-kompatible und SIIT-IPv6-Adressen (`::127.0.0.1`, `::ffff:0:…`); Zeitsperre im Anfrageformular verpflichtend
+- Statusänderungen ohne Doppel-Benachrichtigung: Zeilensperre bei Absage/Entscheidung, bedingtes Verfallen offener Anfragen im Worker
+- Zeitlimits für SMTP, Web-Push und je Zustellung; Worker erhält 30 s zum Beenden
+- Fehlermeldungen in Logs und Versandprotokoll ohne E-Mail-Adressen/Telefonnummern; Versandprotokolle werden mit der Anonymisierung gelöscht
+- Sommerzeit-Lücke erzeugt keine doppelten Termine; kein Verschieben in die Vergangenheit
+- Indizes für Slot-Berechnung, Worker und Löschfristen
+- Barrierefreiheit: `aria-invalid` an fehlerhaften Feldern, Fehlermeldung wird nur einmal angesagt, Tageskalender per Tastatur scrollbar, größere Zielflächen, kein seitliches Scrollen der Website am Handy
+
+Offen (bewusst): Rate-Limits im Arbeitsspeicher setzen genau eine App-Instanz voraus (in `docker-compose.yml` vermerkt).

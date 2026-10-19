@@ -25,7 +25,7 @@ export async function sendPushToUser(userId: string, payload: { title: string; b
   let sent = 0
   for (const sub of subscriptions) {
     try {
-      await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, JSON.stringify(payload), { TTL: 3600, urgency: 'normal' })
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, JSON.stringify(payload), { TTL: 3600, urgency: 'normal', timeout: 15_000 })
       sent++
     } catch (error) {
       const status = (error as { statusCode?: number }).statusCode

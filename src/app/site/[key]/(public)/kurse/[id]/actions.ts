@@ -6,6 +6,7 @@ import type { ActionState } from '@/lib/actions'
 import { isBookable, requireTenant } from '@/lib/tenant'
 import { parsePublicContact } from '@/lib/booking/public-form'
 import { BookingError, createGroupBooking, joinWaitlist } from '@/lib/booking/service'
+import { logError } from '@/lib/log'
 
 function sessionId(formData: FormData) {
   const id = formData.get('kurs')
@@ -33,7 +34,7 @@ export async function bookCourseAction(_prev: ActionState, formData: FormData): 
     token = result.manageToken
   } catch (error) {
     if (error instanceof BookingError) return { error: error.message }
-    console.error('Kursbuchung fehlgeschlagen', error)
+    logError('Kursbuchung fehlgeschlagen', error)
     return { error: 'Die Buchung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.' }
   }
   redirect(`/termin/${token}?neu=1`)

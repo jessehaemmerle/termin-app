@@ -447,6 +447,10 @@ model Booking {
   @@index([staffId, blockedFrom])
   @@index([customerId])
   @@index([groupSessionId])
+  // Slot-Berechnung (Überschneidung je Betrieb), Statuspflege und Löschfristen im Worker
+  @@index([tenantId, blockedFrom])
+  @@index([status, startsAt])
+  @@index([tenantId, endsAt])
 }
 
 model BookingResource {
@@ -524,6 +528,9 @@ model Notification {
 
   @@index([status, nextAttemptAt])
   @@index([tenantId, createdAt])
+  // Freigabe hängengebliebener Einträge und Aufräumen alter Protokolle
+  @@index([status, lockedAt])
+  @@index([createdAt])
 }
 
 model Session {

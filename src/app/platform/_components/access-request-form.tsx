@@ -38,7 +38,7 @@ export function AccessRequestForm({ privacyHref }: { privacyHref: string }) {
       <Field id="telefon" label="Telefon" optional>
         <input id="telefon" name="telefon" type="tel" autoComplete="tel" className="field-control" />
       </Field>
-      <Field id="team" label="Wie viele Personen nehmen Termine an?" optional>
+      <Field id="team" label="Teamgröße" optional>
         <select id="team" name="team" className="field-control" defaultValue="">
           <option value="">Bitte wählen</option>
           <option value="1">nur ich</option>
@@ -64,7 +64,7 @@ export function AccessRequestForm({ privacyHref }: { privacyHref: string }) {
           Wir verwenden Ihre Angaben nur, um Ihre Anfrage zu beantworten, und löschen sie spätestens nach sechs Monaten, wenn kein Vertrag zustande kommt. Mehr dazu in der{' '}
           <Link href={privacyHref}>Datenschutzerklärung</Link>.
         </p>
-        <SubmitButton pendingLabel="Wird gesendet …">Zugang anfragen</SubmitButton>
+        <SubmitButton pendingLabel="Wird gesendet …">Anfrage senden</SubmitButton>
       </div>
     </ActionForm>
   )

@@ -31,14 +31,18 @@ export async function queueReminders(now = new Date()) {
 /** Status-Pflege: unbestätigte Anfragen verfallen, vergangene Termine gelten als erledigt. */
 export async function housekeeping(now = new Date()) {
   const expired = await db.booking.findMany({ where: { status: 'PENDING', startsAt: { lt: now } }, include: { customer: true, tenant: true } })
+  let count = 0
   for (const booking of expired) {
     await db.$transaction(async (tx) => {
-      await tx.booking.update({ where: { id: booking.id }, data: { status: 'EXPIRED' } })
+      // Bedingt aktualisieren: parallele Worker bzw. eine gleichzeitige Entscheidung im Betrieb gewinnen
+      const changed = await tx.booking.updateMany({ where: { id: booking.id, status: 'PENDING' }, data: { status: 'EXPIRED' } })
+      if (!changed.count) return
+      count++
       await enqueueCustomerNotification(tx, booking.tenant, booking, 'BOOKING_DECLINED')
     })
   }
   const completed = await db.booking.updateMany({ where: { status: 'CONFIRMED', endsAt: { lt: new Date(now.getTime() - 24 * HOUR) } }, data: { status: 'COMPLETED' } })
-  return { expired: expired.length, completed: completed.count }
+  return { expired: count, completed: completed.count }
 }
 
 function monthsAgo(now: Date, months: number) {

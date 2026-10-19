@@ -5,6 +5,7 @@ import { db } from '../lib/db'
 import { env } from '../lib/env'
 import { processNotifications } from '../lib/jobs/notifications'
 import { housekeeping, queueReminders, runRetention } from '../lib/jobs/maintenance'
+import { logError } from '../lib/log'
 
 env() // Konfiguration früh prüfen
 
@@ -32,7 +33,7 @@ async function tick() {
           console.info(`[worker] ${job.name}: ${JSON.stringify(result)}`)
         }
       })
-      .catch((error) => console.error(`[worker] ${job.name} fehlgeschlagen:`, error))
+      .catch((error) => logError(`[worker] ${job.name} fehlgeschlagen`, error))
       .finally(() => {
         job.running = false
       })

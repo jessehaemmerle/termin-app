@@ -12,6 +12,7 @@ import { sendInviteEmail } from '@/lib/notifications/auth-emails'
 import { tenantUrl } from '@/lib/tenant'
 import { audit } from '@/lib/audit'
 import { boundId, checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { logError } from '@/lib/log'
 
 const staffSchema = z.object({
   name: z.string({ error: 'Bitte einen Namen angeben.' }).min(2, 'Bitte einen Namen angeben.').max(80),
@@ -92,7 +93,7 @@ export async function inviteUserAction(_prev: ActionState, formData: FormData): 
     await sendInviteEmail(ctx.tenant, email, ctx.user.name, link)
   } catch (error) {
     mailed = false
-    console.error('Einladung konnte nicht gesendet werden', error)
+    logError('Einladung konnte nicht gesendet werden', error)
   }
   await audit({ tenantId: ctx.tenant.id, actorType: 'USER', actorId: ctx.user.id, action: 'team.invited', entityType: 'User', entityId: user.id })
   refresh()
@@ -110,7 +111,7 @@ export async function resendInviteAction(userId: string, _prev: ActionState): Pr
   if (!user) return { error: 'Einladung nicht gefunden oder bereits angenommen.' }
   const token = await createAuthToken('INVITE', { userId: user.id })
   const link = tenantUrl(ctx.tenant, `/admin/einladung/${token}`)
-  await sendInviteEmail(ctx.tenant, user.email, ctx.user.name, link).catch((e) => console.error(e))
+  await sendInviteEmail(ctx.tenant, user.email, ctx.user.name, link).catch((e) => logError('Einladung fehlgeschlagen', e))
   return { ok: true, message: 'Neue Einladung erstellt.', data: { inviteLink: link } }
 }
 

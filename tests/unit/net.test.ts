@@ -9,7 +9,7 @@ describe('SSRF-Schutz für eigene Server der Betriebe', () => {
   it('sperrt interne, reservierte und umgeleitete Adressen', () => {
     for (const a of [
       '127.0.0.1', '10.1.2.3', '172.18.0.2', '192.168.1.1', '169.254.169.254', '100.64.1.1', '0.0.0.0', '255.255.255.255',
-      '::1', '::', '::ffff:10.0.0.1', '::ffff:127.0.0.1', 'fd00::1', 'fe80::1', '64:ff9b::a00:1', '2002:a00:1::1',
+      '::1', '::', '::127.0.0.1', '::ffff:0:7f00:1', '::ffff:10.0.0.1', '::ffff:127.0.0.1', 'fd00::1', 'fe80::1', '64:ff9b::a00:1', '2002:a00:1::1',
       'localhost', 'db',
     ]) expect(isPublicAddress(a), a).toBe(false)
   })

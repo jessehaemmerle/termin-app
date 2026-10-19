@@ -301,6 +301,8 @@ async function notifyWaitlist(client: DbClient, tenant: Tenant, booking: Booking
 
 export async function cancelBooking(tenant: Tenant, bookingId: string, by: 'CUSTOMER' | 'BUSINESS') {
   return db.$transaction(async (tx) => {
+    // Zeile sperren: gleichzeitige Absagen (Doppelklick, Betrieb und Kund:in) werden nacheinander geprüft
+    await tx.$queryRaw`SELECT "id" FROM "Booking" WHERE "id" = ${bookingId} FOR UPDATE`
     const booking = await tx.booking.findFirst({ where: { id: bookingId, tenantId: tenant.id }, include: { customer: true } })
     if (!booking) throw new BookingError('NOT_FOUND', 'Termin nicht gefunden.')
     if (!(ACTIVE_STATUSES as readonly string[]).includes(booking.status)) {
@@ -327,6 +329,7 @@ export async function cancelBooking(tenant: Tenant, bookingId: string, by: 'CUST
 
 export async function setBookingDecision(tenant: Tenant, bookingId: string, decision: 'CONFIRMED' | 'DECLINED') {
   return db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "Booking" WHERE "id" = ${bookingId} FOR UPDATE`
     const booking = await tx.booking.findFirst({ where: { id: bookingId, tenantId: tenant.id, status: 'PENDING' } })
     if (!booking) throw new BookingError('INVALID_STATE', 'Diese Anfrage wurde bereits bearbeitet.')
     const updated = await tx.booking.update({
@@ -349,6 +352,7 @@ export async function setBookingOutcome(tenant: Tenant, bookingId: string, statu
 
 /** Verschiebt einen Einzeltermin (durch den Betrieb). Arbeitszeiten werden nicht erzwungen, Kollisionen schon. */
 export async function rescheduleBooking(tenant: Tenant, bookingId: string, newStart: Date, staffId?: string) {
+  if (newStart.getTime() < Date.now()) throw new BookingError('INVALID_STATE', 'Ein Termin kann nicht in die Vergangenheit verschoben werden.')
   try {
     return await db.$transaction(
       async (tx) => {

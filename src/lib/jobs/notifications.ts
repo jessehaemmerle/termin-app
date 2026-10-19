@@ -3,6 +3,7 @@ import { sendMail } from '../notifications/mailer'
 import { sendWhatsappTemplate, WhatsappError } from '../notifications/whatsapp'
 import { sendPushToUser } from '../notifications/push'
 import { customerWhatsapp, renderCustomerEmail, renderStaffEmail, renderWaitlistEmail, staffPush, waitlistWhatsapp } from '../notifications/render'
+import { scrubPersonalData } from '../log'
 import type { Notification } from '@/generated/prisma/client'
 
 // Verarbeitet die Outbox. Mehrere Worker sind möglich (FOR UPDATE SKIP LOCKED).
@@ -11,6 +12,20 @@ const MAX_ATTEMPTS = 5
 const BACKOFF_MINUTES = [1, 5, 15, 60, 180]
 
 class Skip extends Error {}
+
+/** Gesamtlimit je Zustellung – deutlich unter der Freigabe hängengebliebener Einträge (10 Minuten). */
+const DELIVERY_TIMEOUT_MS = 90_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: NodeJS.Timeout
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`Zeitüberschreitung nach ${ms / 1000} s`)), ms)
+    }),
+  ])
+}
+
 
 async function claim(limit: number): Promise<string[]> {
   // Hängengebliebene Einträge (Worker-Absturz) wieder freigeben
@@ -97,7 +112,7 @@ export async function processNotifications(limit = 20) {
     const n = await db.notification.findUnique({ where: { id } })
     if (!n) continue
     try {
-      const ref = await deliver(n)
+      const ref = await withTimeout(deliver(n), DELIVERY_TIMEOUT_MS)
       await db.notification.update({ where: { id }, data: { status: 'SENT', sentAt: new Date(), providerRef: ref?.slice(0, 200), lockedAt: null, lastError: null } })
       result.sent++
     } catch (error) {
@@ -106,7 +121,7 @@ export async function processNotifications(limit = 20) {
         result.skipped++
         continue
       }
-      const message = (error instanceof Error ? error.message : String(error)).slice(0, 300)
+      const message = scrubPersonalData(error instanceof Error ? error.message : String(error)).slice(0, 300)
       const permanent = error instanceof WhatsappError && error.permanent
       if (permanent || n.attempts >= MAX_ATTEMPTS) {
         await db.notification.update({ where: { id }, data: { status: 'FAILED', lockedAt: null, lastError: message } })

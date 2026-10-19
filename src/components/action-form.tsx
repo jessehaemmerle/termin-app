@@ -27,16 +27,27 @@ export function ActionForm({
   const summaryRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Ungültige Felder für Hilfstechnologien markieren (WCAG 3.3.1, 4.1.2)
+    const form = formRef.current
+    if (form) {
+      for (const el of Array.from(form.elements)) {
+        const name = (el as HTMLInputElement).name
+        if (!name) continue
+        if (state?.fieldErrors?.[name]) el.setAttribute('aria-invalid', 'true')
+        else el.removeAttribute('aria-invalid')
+      }
+    }
     if (state?.error) summaryRef.current?.focus()
-    if (state?.ok && resetOnSuccess) formRef.current?.reset()
+    if (state?.ok && resetOnSuccess) form?.reset()
   }, [state, resetOnSuccess])
 
   return (
     <FormStateContext.Provider value={state}>
       <form ref={formRef} action={formAction} className={className} id={id} noValidate={false}>
-        <div aria-live="polite" className="empty:hidden" ref={summaryRef} tabIndex={-1}>
+        {/* Fokus springt bei Fehlern hierher; role="alert" sagt die Meldung einmal an */}
+        <div className="empty:hidden">
           {state?.error && (
-            <div role="alert" className="border border-danger/40 bg-danger-soft rounded-[var(--radius-control)] px-4 py-3">
+            <div role="alert" ref={summaryRef} tabIndex={-1} className="border border-danger/40 bg-danger-soft rounded-[var(--radius-control)] px-4 py-3">
               <p className="font-semibold text-danger">{state.error}</p>
               {state.fieldErrors && Object.keys(state.fieldErrors).length > 0 && (
                 <ul className="mt-1 text-sm list-disc pl-5">

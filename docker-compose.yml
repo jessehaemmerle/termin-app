@@ -56,6 +56,7 @@ services:
     restart: "no"
     mem_limit: 512m
 
+  # Genau eine Instanz: Rate-Limits liegen im Arbeitsspeicher des Prozesses.
   app:
     <<: *app
     build: .
@@ -69,6 +70,8 @@ services:
   worker:
     <<: *app
     command: ["node", "dist/worker.mjs"]
+    # Zeit für laufende Zustellungen beim Beenden (Worker wartet bis zu 20 s)
+    stop_grace_period: 30s
     depends_on:
       migrate: { condition: service_completed_successfully }
     networks: [backend, egress]

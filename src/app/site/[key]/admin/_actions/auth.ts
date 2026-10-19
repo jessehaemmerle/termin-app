@@ -14,6 +14,7 @@ import { clientIp } from '@/lib/request'
 import { audit } from '@/lib/audit'
 import { requireStaff } from '@/lib/auth/guards'
 import { formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { logError } from '@/lib/log'
 
 const loginSchema = z.object({
   email: z.email({ error: 'Bitte gib deine E-Mail-Adresse ein.' }).max(200),
@@ -68,7 +69,7 @@ export async function staffRequestResetAction(_prev: ActionState, formData: Form
   const user = await db.user.findUnique({ where: { tenantId_email: { tenantId: tenant.id, email } } })
   if (user?.active && user.passwordHash) {
     const token = await createAuthToken('PASSWORD_RESET', { userId: user.id })
-    await sendPasswordResetEmail(tenant, email, tenantUrl(tenant, `/admin/passwort-neu/${token}`)).catch((e) => console.error('Reset-Mail fehlgeschlagen', e))
+    await sendPasswordResetEmail(tenant, email, tenantUrl(tenant, `/admin/passwort-neu/${token}`)).catch((e) => logError('Reset-Mail fehlgeschlagen', e))
   }
   return ok
 }

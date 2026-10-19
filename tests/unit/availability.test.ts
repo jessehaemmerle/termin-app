@@ -31,6 +31,21 @@ function query(overrides: Partial<SlotQuery> = {}): SlotQuery {
 const times = (slots: { start: number }[]) => slots.map((s) => localMinuteOfDay(new Date(s.start), TZ)).map((m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`)
 
 describe('computeSlots', () => {
+  it('bietet in der Sommerzeit-Lücke keine doppelten Zeiten an', () => {
+    // Sonntag, 29. März 2026: 02:00 springt auf 03:00
+    const slots = computeSlots(
+      query({
+        date: '2026-03-29',
+        now: at('2026-03-20', '12:00'),
+        durationMinutes: 30,
+        staff: [{ id: 'anna', hours: { 7: [{ start: 60, end: 4 * 60 }] }, blocked: [], absent: [] }],
+      }),
+    )
+    const starts = slots.map((s) => s.start)
+    expect(new Set(starts).size).toBe(starts.length)
+    expect(times(slots)).toEqual(['01:00', '01:30', '03:00', '03:30'])
+  })
+
   it('liefert Slots im Raster, die vollständig in die Arbeitszeit passen', () => {
     expect(times(computeSlots(query()))).toEqual(['09:00', '09:30', '10:00', '10:30', '11:00'])
   })

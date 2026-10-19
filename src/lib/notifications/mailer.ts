@@ -18,6 +18,9 @@ type SenderTenant = Pick<Tenant, 'name' | 'email' | 'smtpHost' | 'smtpPort' | 's
 
 const transports = new Map<string, Transporter>()
 
+/** Kurze Zeitlimits: ein hängender Server darf die Versand-Warteschlange nicht blockieren. */
+const TIMEOUTS = { connectionTimeout: 20_000, greetingTimeout: 20_000, socketTimeout: 30_000 }
+
 function platformTransport(): Transporter | null {
   const e = env()
   if (!e.SMTP_HOST) return null
@@ -31,6 +34,7 @@ function platformTransport(): Transporter | null {
         secure: e.SMTP_SECURE,
         auth: e.SMTP_USER ? { user: e.SMTP_USER, pass: e.SMTP_PASSWORD } : undefined,
         requireTLS: !e.SMTP_SECURE,
+        ...TIMEOUTS,
       }),
     )
   }
@@ -56,6 +60,7 @@ export async function tenantTransport(tenant: SenderTenant): Promise<Transporter
     secure: tenant.smtpSecure,
     auth: tenant.smtpUser ? { user: tenant.smtpUser, pass: password ?? '' } : undefined,
     requireTLS: !tenant.smtpSecure,
+    ...TIMEOUTS,
   })
 }
 

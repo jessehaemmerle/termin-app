@@ -249,8 +249,8 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
         </ul>
       </nav>
       <div className="flex justify-between mt-2 text-sm">
-        {canGoBack ? <Link href={href({ leistung: service.id, person, ab: prevStart, datum: prevStart < todayLocal ? todayLocal : prevStart })}>Frühere Tage</Link> : <span />}
-        {canGoForward && <Link href={href({ leistung: service.id, person, ab: nextStart, datum: nextStart })}>Spätere Tage</Link>}
+        {canGoBack ? <Link href={href({ leistung: service.id, person, ab: prevStart, datum: prevStart < todayLocal ? todayLocal : prevStart })} className="inline-flex items-center min-h-11">Frühere Tage</Link> : <span />}
+        {canGoForward && <Link href={href({ leistung: service.id, person, ab: nextStart, datum: nextStart })} className="inline-flex items-center min-h-11">Spätere Tage</Link>}
       </div>
 
       <section aria-labelledby="zeiten" className="mt-6">

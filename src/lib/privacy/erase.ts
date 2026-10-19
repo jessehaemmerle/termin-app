@@ -19,7 +19,8 @@ export async function anonymizeBookings(tx: Prisma.TransactionClient, where: Pri
   const affected = await tx.booking.findMany({ where: { ...where, anonymizedAt: null }, select: { id: true } })
   if (!affected.length) return 0
   const ids = affected.map((b) => b.id)
-  await tx.notification.updateMany({ where: { bookingId: { in: ids }, status: { in: ['PENDING', 'FAILED'] } }, data: { status: 'SKIPPED' } })
+  // Versandprotokolle enthalten u. U. Adressen in Fehlermeldungen: mit dem Personenbezug löschen
+  await tx.notification.deleteMany({ where: { bookingId: { in: ids } } })
   await tx.booking.updateMany({ where: { id: { in: ids } }, data: { ...ANONYMIZED_BOOKING, anonymizedAt: new Date() } })
   return ids.length
 }

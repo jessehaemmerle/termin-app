@@ -15,6 +15,7 @@ import { createAuthToken } from '@/lib/auth/tokens'
 import { sendInviteEmail } from '@/lib/notifications/auth-emails'
 import { audit } from '@/lib/audit'
 import { boundId, boundOneOf, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { logError } from '@/lib/log'
 
 const loginSchema = z.object({
   email: z.email({ error: 'Bitte die E-Mail-Adresse eingeben.' }).max(200),
@@ -95,7 +96,7 @@ export async function createTenantAction(_prev: ActionState, formData: FormData)
   let mailed = true
   await sendInviteEmail(tenant, owner.email, 'Das Plattform-Team', link).catch((e) => {
     mailed = false
-    console.error('Einladung an Inhaber:in fehlgeschlagen', e)
+    logError('Einladung an Inhaber:in fehlgeschlagen', e)
   })
   await audit({ tenantId: tenant.id, actorType: 'PLATFORM_ADMIN', actorId: admin.id, action: 'tenant.created', detail: tenant.slug })
   refresh()
@@ -133,7 +134,7 @@ export async function resendOwnerInviteAction(tenantId: string, _prev: ActionSta
   if (!owner) return { error: 'Keine offene Einladung vorhanden.' }
   const token = await createAuthToken('INVITE', { userId: owner.id })
   const link = tenantUrl(tenant, `/admin/einladung/${token}`)
-  await sendInviteEmail(tenant, owner.email, 'Das Plattform-Team', link).catch((e) => console.error(e))
+  await sendInviteEmail(tenant, owner.email, 'Das Plattform-Team', link).catch((e) => logError('Einladung fehlgeschlagen', e))
   await audit({ tenantId: tenant.id, actorType: 'PLATFORM_ADMIN', actorId: admin.id, action: 'user.invited', detail: `Einladung erneut an ${owner.email}` })
   return { ok: true, message: 'Neue Einladung erstellt.', data: { inviteLink: link } }
 }

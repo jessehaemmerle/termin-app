@@ -12,6 +12,7 @@ import { renderEmail } from '@/lib/notifications/email-layout'
 import { sendMail } from '@/lib/notifications/mailer'
 import { platformUrl, tenantUrl } from '@/lib/urls'
 import { formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { logError } from '@/lib/log'
 
 const requestSchema = z.object({
   betrieb: z.string({ error: 'Bitte den Namen des Betriebs angeben.' }).min(2, 'Bitte den Namen des Betriebs angeben.').max(120),
@@ -30,7 +31,7 @@ export async function submitAccessRequestAction(_prev: ActionState, formData: Fo
   const raw = formObject(formData)
   // Bot-Schutz ohne Drittanbieter: Honeypot und Mindestbearbeitungszeit
   const renderedAt = Number(raw.t)
-  if (raw.website || (Number.isFinite(renderedAt) && Date.now() - renderedAt < 3000)) {
+  if (raw.website || !Number.isFinite(renderedAt) || Date.now() - renderedAt < 3000) {
     return { error: 'Die Anfrage konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut.' }
   }
   const limit = rateLimit(`access-request:${await clientIp()}`, 5, 60 * 60 * 1000)
@@ -80,7 +81,7 @@ export async function submitAccessRequestAction(_prev: ActionState, formData: Fo
       },
       '#1f5f8b',
     )
-    await sendMail({ to: e.OPERATOR_EMAIL, ...mail, replyTo: d.email }).catch((error) => console.error('Anfrage-Mail fehlgeschlagen', error))
+    await sendMail({ to: e.OPERATOR_EMAIL, ...mail, replyTo: d.email }).catch((error) => logError('Anfrage-Mail fehlgeschlagen', error))
   }
 
   return { ok: true, message: 'Danke für Ihre Anfrage! Wir melden uns innerhalb von zwei Werktagen bei Ihnen.' }

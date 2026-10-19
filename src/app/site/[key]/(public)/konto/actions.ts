@@ -20,6 +20,7 @@ import { rateLimit } from '@/lib/rate-limit'
 import { clientIp } from '@/lib/request'
 import { audit } from '@/lib/audit'
 import { boundOneOf, checkbox, formObject, zodFieldErrors, type ActionState } from '@/lib/actions'
+import { logError } from '@/lib/log'
 
 async function accountsEnabled() {
   const tenant = await requireTenant()
@@ -88,7 +89,7 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
     const token = await createAuthToken('EMAIL_VERIFY', { customerId: customer.id })
     await sendVerifyEmail(tenant, email, tenantUrl(tenant, `/konto/bestaetigen/${token}`))
   } catch (error) {
-    console.error('Registrierungs-E-Mail fehlgeschlagen', error)
+    logError('Registrierungs-E-Mail fehlgeschlagen', error)
     return { error: 'Die E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.' }
   }
   return generic
@@ -126,7 +127,7 @@ export async function customerRequestResetAction(_prev: ActionState, formData: F
   const customer = await db.customer.findUnique({ where: { tenantId_email: { tenantId: tenant.id, email } } })
   if (customer?.passwordHash) {
     const token = await createAuthToken('PASSWORD_RESET', { customerId: customer.id })
-    await sendPasswordResetEmail(tenant, email, tenantUrl(tenant, `/konto/passwort-neu/${token}`), true).catch((e) => console.error(e))
+    await sendPasswordResetEmail(tenant, email, tenantUrl(tenant, `/konto/passwort-neu/${token}`), true).catch((e) => logError('Reset-Mail fehlgeschlagen', e))
   }
   return ok
 }
