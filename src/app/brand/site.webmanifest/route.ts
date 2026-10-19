@@ -11,7 +11,7 @@ export function GET() {
       start_url: platformPath('/'),
       display: 'standalone',
       background_color: '#f3f5f8',
-      theme_color: '#12305f',
+      theme_color: '#0c3563',
       icons: [
         { src: '/brand/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
         { src: '/brand/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },

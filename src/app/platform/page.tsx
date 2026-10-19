@@ -83,7 +83,7 @@ function PhonePreview() {
             <p className="text-[0.7rem] font-semibold text-graphite uppercase tracking-wide">Vormittag</p>
             <div className="grid grid-cols-3 gap-1.5">
               {times.slice(0, 3).map((t, i) => (
-                <span key={t} className={`rounded-lg py-1.5 text-center font-figures text-sm font-semibold ${i === 2 ? 'bg-brand-soft text-brand-text border-[1.5px] border-brand' : 'bg-surface border border-rule'}`}>{t}</span>
+                <span key={t} className={`rounded-lg py-1.5 text-center font-figures text-sm font-semibold ${i === 2 ? 'bg-accent-soft text-ink border-[1.5px] border-accent' : 'bg-surface border border-rule'}`}>{t}</span>
               ))}
             </div>
             <p className="text-[0.7rem] font-semibold text-graphite uppercase tracking-wide">Nachmittag</p>
@@ -97,7 +97,7 @@ function PhonePreview() {
         </div>
       </div>
       <div className="absolute -right-6 bottom-16 w-48 rounded-xl bg-surface border border-rule shadow-lg px-3 py-2.5">
-        <p className="flex items-center gap-1.5 text-xs font-semibold text-ok"><Icon name="whatsapp" className="size-4" /> Erinnerung</p>
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-accent-text"><Icon name="whatsapp" className="size-4" /> Erinnerung</p>
         <p className="text-xs mt-0.5">Morgen, 10:30 Uhr: Damenhaarschnitt bei Friseur Mayer</p>
       </div>
     </div>
@@ -116,7 +116,7 @@ export default function PlatformHome() {
       <section aria-labelledby="hero-titel" className="grid gap-12 md:grid-cols-[1.15fr_1fr] md:items-center pt-2">
         <div className="space-y-6">
           <p className="inline-flex items-center gap-2 rounded-full border border-rule bg-surface px-3 py-1 text-sm text-graphite">
-            <Icon name="shield" className="size-4 text-ok" /> Gehostet in der EU · ohne Tracking
+            <Icon name="shield" className="size-4 text-accent-text" /> Gehostet in der EU · ohne Tracking
           </p>
           <h1 id="hero-titel" className="font-display text-4xl md:text-[3.5rem] md:leading-[1.02] font-semibold tracking-tight">
             Ihre Termine. Online gebucht. Unter Ihrem Namen.
@@ -156,7 +156,7 @@ export default function PlatformHome() {
         <ul className="grid gap-px bg-rule border border-rule rounded-[var(--radius-sheet)] overflow-hidden sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
             <li key={f.title} className="bg-surface p-6">
-              <span className="inline-flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand-text"><Icon name={f.icon} /></span>
+              <span className="inline-flex size-10 items-center justify-center rounded-lg bg-accent-soft text-accent-text"><Icon name={f.icon} /></span>
               <h3 className="font-semibold mt-4">{f.title}</h3>
               <p className="text-graphite text-sm mt-1">{f.text}</p>
             </li>
@@ -186,7 +186,7 @@ export default function PlatformHome() {
         <ul className="ruled bg-surface border border-rule rounded-[var(--radius-sheet)]">
           {PRIVACY.map(([t, d]) => (
             <li key={t} className="px-5 py-4 flex gap-3">
-              <Icon name="shield" className="size-5 shrink-0 mt-0.5 text-ok" />
+              <Icon name="shield" className="size-5 shrink-0 mt-0.5 text-accent-text" />
               <div>
                 <h3 className="font-semibold">{t}</h3>
                 <p className="text-graphite text-sm">{d}</p>
@@ -226,7 +226,7 @@ export default function PlatformHome() {
               'Updates und Sicherungen inklusive',
             ].map((item) => (
               <li key={item} className="flex gap-2.5">
-                <span aria-hidden="true" className="text-ok font-semibold">✓</span>
+                <span aria-hidden="true" className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-white text-xs font-bold mt-0.5">✓</span>
                 <span>{item}</span>
               </li>
             ))}

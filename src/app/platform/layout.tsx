@@ -1,8 +1,13 @@
 import Link from 'next/link'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { env } from '@/lib/env'
 import { platformPath } from '@/lib/tenant'
 import { buttonClass } from '@/components/ui'
+import { brandCss } from '@/lib/color'
+import { currentNonce } from '@/lib/request'
+
+/** Farben aus dem Plattform-Logo: Navy als Markenfarbe, Türkis als Akzent */
+const PLATFORM_BRAND = '#0c3563'
 
 export async function generateMetadata(): Promise<Metadata> {
   const name = env().PLATFORM_NAME
@@ -22,11 +27,17 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function PlatformLayout({ children }: { children: React.ReactNode }) {
+export async function generateViewport(): Promise<Viewport> {
+  return { themeColor: PLATFORM_BRAND }
+}
+
+export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
   const e = env()
+  const nonce = await currentNonce()
   const home = platformPath('/')
   return (
     <div className="min-h-dvh flex flex-col">
+      <style nonce={nonce}>{brandCss(PLATFORM_BRAND)}</style>
       <a href="#inhalt" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-surface focus:px-4 focus:py-2">Zum Inhalt springen</a>
       <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-rule safe-top">
         <div className="mx-auto max-w-6xl px-4 min-h-16 flex items-center justify-between gap-4">

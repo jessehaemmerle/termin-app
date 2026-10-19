@@ -35,6 +35,10 @@
   --color-brand-text: var(--brand-text);
   --color-brand-soft: var(--brand-soft);
   --color-brand-line: var(--brand-line);
+  /* Zweitfarbe der Plattform-Marke (Türkis): Fläche/Symbol bzw. Text (≥ 4,5:1) */
+  --color-accent: var(--accent, #0ead99);
+  --color-accent-text: var(--accent-text, #087a6c);
+  --color-accent-soft: var(--accent-soft, #e3f6f3);
 
   --font-sans: 'Atkinson Hyperlegible Next Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Bricolage Grotesque Variable', 'Atkinson Hyperlegible Next Variable', ui-sans-serif, sans-serif;
