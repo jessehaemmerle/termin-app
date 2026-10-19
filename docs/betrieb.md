@@ -2,7 +2,7 @@
 
 ## Voraussetzungen
 
-- Server in der EU (z. B. 2 vCPU, 4 GB RAM) mit Docker Engine und Docker Compose Plugin
+- Server in der EU (empfohlen 2 vCPU, 4 GB RAM; bei 2 GB RAM vor dem ersten Build Swap anlegen, siehe unten) mit Docker Engine und Docker Compose Plugin
 - Domain für die Plattform, z. B. `termin-app.at`, mit DNS-Einträgen:
   - `A`/`AAAA` für `termin-app.at` und `*.termin-app.at` auf den Server
 - Offene Ports 80 und 443 (TCP) sowie 443/UDP (HTTP/3)
@@ -34,7 +34,16 @@ In `.env` mindestens setzen:
 `TRUST_PROXY` und `COOKIE_SECURE` setzt `docker-compose.yml` in Produktion automatisch auf `true`.
 
 ```bash
-docker compose up -d --build
+docker compose build
+docker compose up -d
+```
+
+Der Build braucht kurzzeitig rund 2 GB Arbeitsspeicher. Bei kleinen Servern (Abbruch mit „Out of memory“ bzw. `Killed`) vorher Swap anlegen:
+
+```bash
+sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
 Den ersten Plattform-Admin anlegen (das Startpasswort wird einmalig ausgegeben; beim ersten Login ist 2FA einzurichten):
@@ -65,7 +74,8 @@ Alle Anwendungscontainer laufen als Nicht-root-Benutzer mit schreibgeschütztem 
 ```bash
 cd /opt/termin-app
 git pull
-docker compose up -d --build
+docker compose build
+docker compose up -d
 ```
 
 Migrationen laufen automatisch (Dienst `migrate`). Vor größeren Updates ein Backup erstellen.

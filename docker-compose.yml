@@ -1,12 +1,13 @@
-# Produktion: docker compose up -d --build
+# Produktion: docker compose build && docker compose up -d
 # Voraussetzung: .env mit den Werten aus .env.example (Produktionswerte!), DNS:
 #   A/AAAA <PLATFORM-DOMAIN> und *.<PLATFORM-DOMAIN> auf diesen Server.
 
 name: termin-app
 
 x-app: &app
-  build: .
+  # Gebaut wird nur einmal (Dienst app); migrate und worker nutzen dasselbe Image.
   image: termin-app:latest
+  pull_policy: never
   env_file: .env
   environment:
     NODE_ENV: production
@@ -57,6 +58,7 @@ services:
 
   app:
     <<: *app
+    build: .
     depends_on:
       migrate: { condition: service_completed_successfully }
     volumes:
